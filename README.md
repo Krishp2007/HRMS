@@ -8,38 +8,46 @@ A full-stack Role-Based HRMS built for SaaS companies to streamline employee dir
 
 ---
 
-## 🔑 Demo Credentials
+## 🔑 Demo Credentials (Auto-Seeded)
 
-| Role | Email | Password | Permissions Summary |
-| :--- | :--- | :--- | :--- |
-| **HR / Admin** | `hr@apptrait.com` | `password123` | Full system access: Add/Edit employees, activate/deactivate, company-wide attendance & leave approvals |
-| **Manager** | `manager@apptrait.com` | `password123` | Team management: View assigned team, team attendance, approve/reject team leave requests |
-| **Employee** | `employee@apptrait.com` | `password123` | Personal workspace: Mark daily attendance (check-in/out), apply for leave, view personal history |
+Run `npm run seed` in the `server` directory to populate the database with these pre-configured test accounts across all 3 roles:
+
+| Role | Name | Email | Password | Assigned Manager / Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **HR Lead** | Sarah Connor | `hr@apptrait.com` | `password123` | Full Admin Permissions |
+| **Eng Manager** | Alex Vance | `manager1@apptrait.com` | `password123` | Manager (Engineering Team) |
+| **Sales Manager** | David Miller | `manager2@apptrait.com` | `password123` | Manager (Sales Team) |
+| **Employee 1** | John Doe | `employee1@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
+| **Employee 2** | Jane Smith | `employee2@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
+| **Employee 3** | Robert Johnson | `employee3@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
+| **Employee 4** | Emily Davis | `employee4@apptrait.com` | `password123` | Sales Team (Manager: David Miller) |
+| **Employee 5** | Michael Brown | `employee5@apptrait.com` | `password123` | Sales Team (Manager: David Miller) |
+| **Inactive Emp** | Mark Wilson | `employee6@apptrait.com` | `password123` | Deactivated Account (Access Blocked) |
 
 ---
 
-## 🚀 Key Features & Business Rules
+## 🚀 Key Features & Core Business Rules
 
 1. **Role-Based Access Control (RBAC)**:
-   - Enforced on both Frontend UI (navigation guards) and Backend Controller/Middleware level.
-   - Prevents unauthorized endpoint access, cross-team data access, and self-approval of leave requests.
+   - Middleware `protect` verifies JWT token; `authorize('HR', 'Manager', 'Employee')` enforces access limits per endpoint.
+   - Deactivated users (`status: 'Inactive'`) are automatically blocked at login and API level.
 
 2. **Employee Management**:
-   - HR can create, update, activate/deactivate employee profiles and assign designated managers.
+   - HR can create, update, activate/deactivate employees, and assign managers.
    - Live search by name/email/ID and filtering by department or status.
 
 3. **Attendance Management**:
-   - Single check-in per employee per day with real-time timestamp logging.
-   - Check-out requirement validation (cannot check out without prior check-in).
-   - Blocks check-in if the employee is on an approved leave on that date.
+   - Single check-in per employee per day logged with ISO timestamp.
+   - Cannot check out without prior check-in.
+   - Cannot check in if employee is on an approved leave on that date.
 
 4. **Leave Management Workflow**:
-   - Application with leave type, date range picker, automatic total days calculation, and reason.
-   - Overlapping leave detection and prevention.
+   - Applications validate `endDate >= startDate` and calculate `totalDays`.
+   - Prevents overlapping leave applications (`startDate <= newEndDate AND endDate >= newStartDate`).
    - Approvals and rejections with mandatory rejection explanation text.
 
 5. **Dynamic Dashboards**:
-   - Real-time statistics calculated from MongoDB collections (no hardcoded metrics).
+   - Real-time statistics calculated directly from MongoDB collections (no hardcoded metrics).
 
 ---
 
@@ -192,8 +200,10 @@ Below are 2 critical cases where AI-generated backend code contained security vu
   2. A Manager assigned to Team A could approve leave requests belonging to employees in Team B by passing their `leaveId` in the request parameter.
 - **How Identified**: By auditing security requirements in Section 14 of the specification ("An employee must not be able to approve their own leave request", "Manager A must not be able to approve leave for another manager's team").
 - **How Fixed**:
-  - Added self-approval check: `if (leave.employeeId._id.toString() === req.user._id.toString()) return res.status(403).json(...)`.
-  - Added cross-team check for managers: `if (req.user.role === 'Manager' && leave.employeeId.managerId.toString() !== req.user._id.toString()) return res.status(403).json(...)`.
+  - Added self-approval check in `leaveController.js`:  
+    `if (leave.employeeId._id.toString() === req.user._id.toString()) return res.status(403).json({ message: 'Security Block: You cannot approve your own leave request.' });`
+  - Added cross-team check for managers:  
+    `if (req.user.role === 'Manager' && leave.employeeId.managerId?.toString() !== req.user._id.toString()) return res.status(403).json({ message: 'Access denied: You can only approve leave for your own team members.' });`
 
 ### Case 2: Unchecked Duplicate Check-In Race Condition
 - **What AI Generated**:
@@ -209,9 +219,10 @@ Below are 2 critical cases where AI-generated backend code contained security vu
 - **What Was Wrong**:
   1. Clicking "Check-In" multiple times created duplicate records for the same date.
   2. The schema lacked a unique constraint, allowing multiple active attendance records per user on a single day.
-- **How Identified**: Manual testing of Edge Case 6 & 7 in section 7 ("What happens if an employee clicks Check-in twice?").
+- **How Identified**: Manual testing of Edge Case in Section 7 ("What happens if an employee clicks Check-in twice?").
 - **How Fixed**:
-  - Added a compound unique index in `Attendance.js`: `attendanceSchema.index({ employeeId: 1, date: 1 }, { unique: true })`.
+  - Added a compound unique index in `Attendance.js`:  
+    `attendanceSchema.index({ employeeId: 1, date: 1 }, { unique: true });`
   - Added a pre-query in `checkIn` controller checking `Attendance.findOne({ employeeId, date: todayStr })` before executing creation.
 
 ---
@@ -232,7 +243,7 @@ cd HRMS
 ```bash
 cd server
 npm install
-npm run seed     # Seeds demo HR, Manager & Employee accounts
+npm run seed     # Cleans Users, Attendance, LeaveRequests & seeds 9 realistic test accounts
 npm run dev      # Starts API server on http://localhost:5000
 ```
 
