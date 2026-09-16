@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
@@ -16,9 +17,14 @@ import {
 
 const LeaveManagementPage = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
+
+  // Initialize filter from URL query param if present (e.g. /leaves?status=Pending)
+  const initialStatus = searchParams.get('status') || '';
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
 
   // Apply Leave Modal
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -109,7 +115,7 @@ const LeaveManagementPage = () => {
   const role = user?.role;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -122,7 +128,7 @@ const LeaveManagementPage = () => {
             setFormError('');
             setIsApplyModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-700 transition-all"
+          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all"
         >
           <PlusCircle className="h-4 w-4" />
           <span>Apply For Leave</span>
@@ -130,7 +136,7 @@ const LeaveManagementPage = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
         <h3 className="text-sm font-black text-slate-900">
           {role === 'HR' ? 'Company Leave Records' : role === 'Manager' ? 'Team Leave Applications' : 'My Leave Applications'}
         </h3>
@@ -138,23 +144,23 @@ const LeaveManagementPage = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-indigo-600 focus:outline-none"
+          className="rounded-xl border border-blue-100 bg-sky-50/50 px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-blue-600 focus:outline-none"
         >
           <option value="">All Statuses</option>
-          <option value="Pending">Pending Only</option>
-          <option value="Approved">Approved Only</option>
+          <option value="Pending">Pending Review Only</option>
+          <option value="Approved">Approved Leaves Only</option>
           <option value="Rejected">Rejected Only</option>
         </select>
       </div>
 
       {/* Main Leave Table */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
+      <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="flex h-48 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : leaves.length === 0 ? (
-          <p className="text-center py-8 text-xs font-semibold text-slate-500">No leave requests found.</p>
+          <p className="text-center py-8 text-xs font-semibold text-slate-500">No leave requests found for this filter.</p>
         ) : (
           <table className="w-full text-left text-sm text-slate-700">
             <thead className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-400 font-bold">
@@ -183,7 +189,7 @@ const LeaveManagementPage = () => {
                   <td className="py-3 px-4 text-xs font-semibold text-slate-800">
                     {new Date(l.startDate).toLocaleDateString()} - {new Date(l.endDate).toLocaleDateString()}
                   </td>
-                  <td className="py-3 px-4 font-bold text-indigo-600">{l.totalDays}d</td>
+                  <td className="py-3 px-4 font-bold text-blue-600">{l.totalDays}d</td>
                   <td className="py-3 px-4 text-xs text-slate-600 max-w-xs truncate">
                     {l.reason}
                     {l.rejectionReason && (
@@ -237,7 +243,7 @@ const LeaveManagementPage = () => {
             <select
               value={applyForm.leaveType}
               onChange={(e) => setApplyForm({ ...applyForm, leaveType: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-900 font-semibold"
+              className="w-full rounded-xl border border-blue-100 bg-sky-50/50 p-2.5 text-slate-900 font-semibold"
             >
               <option value="Casual">Casual Leave</option>
               <option value="Sick">Sick Leave</option>
@@ -254,7 +260,7 @@ const LeaveManagementPage = () => {
                 required
                 value={applyForm.startDate}
                 onChange={(e) => setApplyForm({ ...applyForm, startDate: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-900"
+                className="w-full rounded-xl border border-blue-100 bg-sky-50/50 p-2.5 text-slate-900"
               />
             </div>
             <div>
@@ -264,7 +270,7 @@ const LeaveManagementPage = () => {
                 required
                 value={applyForm.endDate}
                 onChange={(e) => setApplyForm({ ...applyForm, endDate: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-900"
+                className="w-full rounded-xl border border-blue-100 bg-sky-50/50 p-2.5 text-slate-900"
               />
             </div>
           </div>
@@ -277,14 +283,14 @@ const LeaveManagementPage = () => {
               value={applyForm.reason}
               onChange={(e) => setApplyForm({ ...applyForm, reason: e.target.value })}
               placeholder="State your reason clearly..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-900 placeholder-slate-400 focus:border-indigo-600 focus:outline-none"
+              className="w-full rounded-xl border border-blue-100 bg-sky-50/50 p-2.5 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={applyLoading}
-            className="w-full rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-all"
+            className="w-full rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-md hover:bg-blue-700 disabled:opacity-50 transition-all"
           >
             {applyLoading ? 'Submitting Application...' : 'Submit Application'}
           </button>

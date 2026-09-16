@@ -8,10 +8,10 @@ const Badge = ({ children, variant = 'default', size = 'sm' }) => {
   };
 
   const variantClasses = {
-    // Roles
-    HR: 'bg-purple-50 text-purple-700 border border-purple-200',
-    Manager: 'bg-blue-50 text-blue-700 border border-blue-200',
-    Employee: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+    // Roles (Light Blue / Sky Blue combo - NO PURPLE)
+    HR: 'bg-blue-100 text-blue-800 border border-blue-200',
+    Manager: 'bg-sky-100 text-sky-800 border border-sky-200',
+    Employee: 'bg-slate-100 text-slate-700 border border-slate-200',
 
     // Statuses
     Active: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
@@ -19,7 +19,7 @@ const Badge = ({ children, variant = 'default', size = 'sm' }) => {
     Present: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     Absent: 'bg-rose-50 text-rose-700 border border-rose-200',
     'Half Day': 'bg-amber-50 text-amber-700 border border-amber-200',
-    Leave: 'bg-blue-50 text-blue-700 border border-blue-200',
+    Leave: 'bg-sky-50 text-sky-700 border border-sky-200',
 
     // Leave Types
     Casual: 'bg-sky-50 text-sky-700 border border-sky-200',

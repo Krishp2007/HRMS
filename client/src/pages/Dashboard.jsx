@@ -19,8 +19,6 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Briefcase,
-  Building,
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -134,24 +132,25 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
       </div>
     );
   }
 
   const role = user?.role;
   const metrics = stats?.metrics || {};
+  const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="space-y-8">
-      {/* Light Corporate Banner */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Light Blue Corporate Banner */}
+      <div className="rounded-3xl border border-blue-100 bg-white p-8 shadow-sm space-y-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <Badge variant={role}>{role} Operations Desk</Badge>
+              <Badge variant={role}>{role} Desk</Badge>
               <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <Sparkles className="h-3.5 w-3.5 text-sky-600" />
                 Live Workspace
               </span>
             </div>
@@ -169,14 +168,14 @@ const Dashboard = () => {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => navigate('/attendance')}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all"
             >
               <Clock className="h-4 w-4" />
               <span>Attendance Hub</span>
             </button>
             <button
               onClick={() => navigate('/leaves')}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+              className="flex items-center gap-2 rounded-xl border border-blue-100 bg-sky-50/50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-100 transition-all"
             >
               <CalendarDays className="h-4 w-4" />
               <span>Apply / View Leave</span>
@@ -184,7 +183,7 @@ const Dashboard = () => {
             {(role === 'HR' || role === 'Manager') && (
               <button
                 onClick={() => navigate('/employees')}
-                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                className="flex items-center gap-2 rounded-xl border border-blue-100 bg-sky-50/50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-100 transition-all"
               >
                 <Users className="h-4 w-4" />
                 <span>Directory</span>
@@ -194,10 +193,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Interactive Quick Check-In / Out Station */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Interactive Shift Tracker Station */}
+      <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-indigo-600">
+          <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
             <Clock className="h-4 w-4" />
             <span>Shift Attendance Tracker</span>
           </div>
@@ -228,7 +227,7 @@ const Dashboard = () => {
           <button
             onClick={handleCheckOut}
             disabled={actionLoading || !todayAttendance?.isCheckedIn || todayAttendance?.isCheckedOut}
-            className="flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-purple-700 disabled:opacity-40 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-sky-700 disabled:opacity-40 transition-all"
           >
             <LogOutIcon className="h-4 w-4" />
             <span>{todayAttendance?.isCheckedOut ? 'Checked Out' : 'Check Out Now'}</span>
@@ -236,23 +235,23 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Dynamic Metric Cards */}
+      {/* Dynamic Metric Cards with Exact Filtered Route Navigation */}
       {role === 'HR' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="indigo" subtext="Directory" />
+            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="blue" subtext="View Directory" />
           </div>
-          <div onClick={() => navigate('/employees')} className="cursor-pointer">
+          <div onClick={() => navigate('/employees?status=Active')} className="cursor-pointer">
             <StatCard title="Active Staff" value={metrics.activeEmployees || 0} icon={UserCheck} color="emerald" subtext="Active Accounts" />
           </div>
-          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
-            <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="blue" subtext="In Office" />
+          <div onClick={() => navigate(`/attendance?date=${todayStr}`)} className="cursor-pointer">
+            <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="indigo" subtext="View Today's Log" />
           </div>
-          <div onClick={() => navigate('/leaves')} className="cursor-pointer">
+          <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
             <StatCard title="On Leave Today" value={metrics.onLeaveToday || 0} icon={CalendarDays} color="rose" subtext="Approved Time-Off" />
           </div>
-          <div onClick={() => navigate('/leaves')} className="cursor-pointer">
-            <StatCard title="Pending Requests" value={metrics.pendingLeaveRequests || 0} icon={AlertCircle} color="amber" subtext="Requires Action" />
+          <div onClick={() => navigate('/leaves?status=Pending')} className="cursor-pointer">
+            <StatCard title="Pending Requests" value={metrics.pendingLeaveRequests || 0} icon={AlertCircle} color="amber" subtext="Review Pending" />
           </div>
         </div>
       )}
@@ -260,16 +259,16 @@ const Dashboard = () => {
       {role === 'Manager' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="indigo" subtext="Assigned Team" />
+            <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="blue" subtext="View Assigned Team" />
           </div>
-          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
-            <StatCard title="Team Present" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="Present Today" />
+          <div onClick={() => navigate(`/attendance?date=${todayStr}`)} className="cursor-pointer">
+            <StatCard title="Team Present" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="View Team Logs" />
           </div>
-          <div onClick={() => navigate('/leaves')} className="cursor-pointer">
-            <StatCard title="Team On Leave" value={metrics.teamMembersOnLeave || 0} icon={CalendarDays} color="rose" subtext="Time-Off Today" />
+          <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
+            <StatCard title="Team On Leave" value={metrics.teamMembersOnLeave || 0} icon={CalendarDays} color="rose" subtext="Approved Time-Off" />
           </div>
-          <div onClick={() => navigate('/leaves')} className="cursor-pointer">
-            <StatCard title="Pending Review" value={metrics.pendingTeamApprovals || 0} icon={AlertCircle} color="amber" subtext="Awaiting Action" />
+          <div onClick={() => navigate('/leaves?status=Pending')} className="cursor-pointer">
+            <StatCard title="Pending Review" value={metrics.pendingTeamApprovals || 0} icon={AlertCircle} color="amber" subtext="Review Applications" />
           </div>
         </div>
       )}
@@ -278,21 +277,25 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Shift Status" value={metrics.todayStatus || 'Not Checked In'} icon={Clock} color={metrics.todayStatus === 'Completed' ? 'emerald' : metrics.todayStatus === 'Checked In' ? 'blue' : 'amber'} />
           <StatCard title="Total Applications" value={metrics.totalLeaveRequests || 0} icon={CalendarDays} color="indigo" />
-          <StatCard title="Pending Review" value={metrics.pendingRequests || 0} icon={AlertCircle} color="amber" />
-          <StatCard title="Approved Leaves" value={metrics.approvedRequests || 0} icon={CheckCircle2} color="emerald" />
+          <div onClick={() => navigate('/leaves?status=Pending')} className="cursor-pointer">
+            <StatCard title="Pending Review" value={metrics.pendingRequests || 0} icon={AlertCircle} color="amber" subtext="View Pending" />
+          </div>
+          <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
+            <StatCard title="Approved Leaves" value={metrics.approvedRequests || 0} icon={CheckCircle2} color="emerald" subtext="View Approved" />
+          </div>
         </div>
       )}
 
-      {/* Direct Pending Leave Approvals Widget for Manager & HR */}
+      {/* Direct Pending Leave Approvals Desk */}
       {(role === 'Manager' || role === 'HR') && pendingLeaves.length > 0 && (
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm space-y-4">
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-600" />
               <h3 className="text-lg font-black text-slate-900">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
             </div>
-            <button onClick={() => navigate('/leaves')} className="text-xs font-bold text-indigo-600 hover:underline">
-              View All Requests →
+            <button onClick={() => navigate('/leaves?status=Pending')} className="text-xs font-bold text-blue-700 hover:underline">
+              View All Pending Requests →
             </button>
           </div>
 
@@ -308,7 +311,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="text-xs text-slate-700">
-                  <span className="font-semibold text-indigo-600">Duration: </span>
+                  <span className="font-semibold text-blue-600">Duration: </span>
                   {new Date(l.startDate).toLocaleDateString()} to {new Date(l.endDate).toLocaleDateString()} ({l.totalDays} Days)
                   <p className="text-slate-500 mt-1 italic">"{l.reason}"</p>
                 </div>
@@ -337,12 +340,12 @@ const Dashboard = () => {
 
       {/* Personnel Quick Access Grid Widget */}
       {(role === 'Manager' || role === 'HR') && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-black text-slate-900">Personnel Quick Access</h3>
             <button
               onClick={() => navigate('/employees')}
-              className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 transition-colors"
             >
               <span>View Full Directory</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -357,52 +360,34 @@ const Dashboard = () => {
                   setSelectedProfileId(emp._id);
                   setIsProfileModalOpen(true);
                 }}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                className="rounded-2xl border border-blue-100 bg-sky-50/40 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-black text-xs">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white font-black text-xs">
                       {emp.fullName.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors text-sm">
+                      <h4 className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors text-sm">
                         {emp.fullName}
                       </h4>
-                      <p className="text-xs text-slate-500 font-mono">{emp.employeeId}</p>
+                      <p className="text-xs text-blue-600 font-mono font-bold">{emp.employeeId}</p>
                     </div>
                   </div>
                   <Badge variant={emp.status} size="xs">{emp.status}</Badge>
                 </div>
 
-                <div className="text-xs text-slate-600 space-y-1 border-t border-slate-200/60 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{emp.designation}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Building className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{emp.department} • <Badge variant={emp.role} size="xs">{emp.role}</Badge></span>
-                  </div>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60">
+                  <Badge variant={emp.role} size="xs">{emp.role}</Badge>
+                  <span className="text-[10px] font-bold text-blue-700 group-hover:underline">View Deep Profile →</span>
                 </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedProfileId(emp._id);
-                    setIsProfileModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-white border border-slate-200 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>Deep Profile</span>
-                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Employee Profile View Modal */}
+      {/* Deep Profile View Modal */}
       <EmployeeProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
