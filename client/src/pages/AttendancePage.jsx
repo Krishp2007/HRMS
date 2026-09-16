@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
@@ -10,76 +9,93 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Grid,
   User,
   CheckCircle2,
   AlertCircle,
   Building,
 } from 'lucide-react';
 
-const ITEMS_PER_PAGE = 6;
-
 const AttendancePage = () => {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
 
   const [todayStatus, setTodayStatus] = useState(null);
+  const [employeesList, setEmployeesList] = useState([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   const [attendanceLogs, setAttendanceLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
 
-  // View Mode: 'calendar' (default) or 'grid'
-  const [viewMode, setViewMode] = useState('calendar');
-
-  // Calendar State
+  // Calendar Date State (default current month)
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Pagination State (for Grid View)
-  const [currentPage, setCurrentPage] = useState(1);
+  const role = user?.role;
 
-  // Optional date filter initialized from URL
-  const [filterDate, setFilterDate] = useState(searchParams.get('date') || '');
+  // 1. Fetch Today Status and Employee List (if HR/Manager)
+  useEffect(() => {
+    const initPage = async () => {
+      try {
+        setLoading(true);
+        const todayRes = await api.get('/attendance/today-status');
+        setTodayStatus(todayRes.data);
 
-  const fetchAttendanceData = async () => {
+        if (role === 'HR' || role === 'Manager') {
+          const empsRes = await api.get('/employees');
+          const activeEmps = empsRes.data.filter((e) => e.status === 'Active');
+          setEmployeesList(activeEmps);
+
+          if (activeEmps.length > 0) {
+            setSelectedEmployeeId(activeEmps[0]._id);
+            setSelectedEmployee(activeEmps[0]);
+          }
+        } else {
+          // Employee role
+          setSelectedEmployeeId(user._id);
+          setSelectedEmployee(user);
+        }
+      } catch (err) {
+        console.error('Failed to initialize attendance page:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initPage();
+  }, [user, role]);
+
+  // 2. Fetch Selected Employee's Attendance History for the Calendar
+  const fetchSelectedEmployeeAttendance = async () => {
+    if (!selectedEmployeeId) return;
+
     try {
       setLoading(true);
-      const role = user?.role;
-      let logsEndpoint = '/attendance/my-history';
-
+      let res;
       if (role === 'HR') {
-        logsEndpoint = `/attendance/all${filterDate ? `?date=${filterDate}` : ''}`;
+        res = await api.get(`/attendance/all?employeeId=${selectedEmployeeId}`);
       } else if (role === 'Manager') {
-        logsEndpoint = `/attendance/team${filterDate ? `?date=${filterDate}` : ''}`;
+        res = await api.get(`/attendance/all?employeeId=${selectedEmployeeId}`);
       } else {
-        logsEndpoint = '/attendance/my-history';
+        res = await api.get('/attendance/my-history');
       }
 
-      const [todayRes, logsRes] = await Promise.all([
-        api.get('/attendance/today-status'),
-        api.get(logsEndpoint),
-      ]);
-
-      setTodayStatus(todayRes.data);
-
-      if (role === 'Manager' && logsRes.data?.records) {
-        setAttendanceLogs(logsRes.data.records);
-      } else if (Array.isArray(logsRes.data)) {
-        setAttendanceLogs(logsRes.data);
-      } else {
-        setAttendanceLogs([]);
-      }
-      setCurrentPage(1);
+      setAttendanceLogs(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error('Failed to fetch attendance logs:', err);
+      console.error('Failed to fetch employee attendance logs:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAttendanceData();
-  }, [filterDate]);
+    fetchSelectedEmployeeAttendance();
+  }, [selectedEmployeeId]);
+
+  const handleEmployeeSelect = (emp) => {
+    setSelectedEmployeeId(emp._id);
+    setSelectedEmployee(emp);
+  };
 
   const handleCheckIn = async () => {
     setActionLoading(true);
@@ -87,7 +103,9 @@ const AttendancePage = () => {
     try {
       await api.post('/attendance/check-in');
       setActionMsg('✅ Checked in successfully!');
-      fetchAttendanceData();
+      const todayRes = await api.get('/attendance/today-status');
+      setTodayStatus(todayRes.data);
+      fetchSelectedEmployeeAttendance();
     } catch (err) {
       alert(err.response?.data?.message || 'Check-in failed');
     } finally {
@@ -101,7 +119,9 @@ const AttendancePage = () => {
     try {
       await api.post('/attendance/check-out');
       setActionMsg('✅ Checked out successfully!');
-      fetchAttendanceData();
+      const todayRes = await api.get('/attendance/today-status');
+      setTodayStatus(todayRes.data);
+      fetchSelectedEmployeeAttendance();
     } catch (err) {
       alert(err.response?.data?.message || 'Check-out failed');
     } finally {
@@ -109,9 +129,9 @@ const AttendancePage = () => {
     }
   };
 
-  // Calendar Grid Calculations
+  // Calendar Calculations
   const year = currentDate.getFullYear();
-  const month = currentDate.getMonth(); // 0-indexed
+  const month = currentDate.getMonth();
 
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -129,58 +149,32 @@ const AttendancePage = () => {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  // Map attendance logs by date for quick lookup in calendar
-  const getLogsForDate = (dayNum) => {
+  // Find attendance record for selected date string YYYY-MM-DD
+  const getLogForDate = (dayNum) => {
     const paddedMonth = String(month + 1).padStart(2, '0');
     const paddedDay = String(dayNum).padStart(2, '0');
     const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
-    return attendanceLogs.filter((log) => log.date === dateStr);
+    return attendanceLogs.find((log) => log.date === dateStr);
   };
-
-  const role = user?.role;
-
-  // Pagination for Grid View
-  const totalPages = Math.ceil(attendanceLogs.length / ITEMS_PER_PAGE) || 1;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedLogs = attendanceLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page Title & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Attendance Center</h2>
-          <p className="text-xs font-semibold text-slate-500">Track daily shift check-ins and view attendance history in calendar or grid format</p>
-        </div>
-
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
-          <button
-            onClick={() => setViewMode('calendar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              viewMode === 'calendar' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <CalendarIcon className="h-3.5 w-3.5" />
-            <span>Calendar Grid View</span>
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <Grid className="h-3.5 w-3.5" />
-            <span>Grid Cards View</span>
-          </button>
-        </div>
+      {/* Title */}
+      <div>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Individual Attendance Calendar</h2>
+        <p className="text-xs font-semibold text-slate-500">
+          {role === 'HR' || role === 'Manager'
+            ? 'Select an employee to view their complete monthly attendance calendar record'
+            : 'View your monthly shift check-in calendar and attendance logs'}
+        </p>
       </div>
 
-      {/* Daily Shift Action Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      {/* Daily Shift Punch Station */}
+      <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-bold text-indigo-600">Today's Shift Action Station ({new Date().toLocaleDateString()})</span>
-            <h3 className="text-xl font-black text-slate-900 mt-1">
+            <span className="text-xs font-bold text-blue-600">Daily Punch Station ({new Date().toLocaleDateString()})</span>
+            <h3 className="text-xl font-black text-slate-900 mt-0.5">
               {!todayStatus?.isCheckedIn
                 ? 'Not Checked In Yet'
                 : !todayStatus?.isCheckedOut
@@ -190,7 +184,7 @@ const AttendancePage = () => {
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {todayStatus?.attendanceRecord?.checkInTime
                 ? `Check-In Recorded: ${new Date(todayStatus.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : 'Mark your arrival to register attendance for today.'}
+                : 'Register your check-in time for today.'}
             </p>
             {actionMsg && <p className="text-xs font-bold text-emerald-600 mt-1">{actionMsg}</p>}
           </div>
@@ -207,7 +201,7 @@ const AttendancePage = () => {
             <button
               onClick={handleCheckOut}
               disabled={actionLoading || !todayStatus?.isCheckedIn || todayStatus?.isCheckedOut}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-40 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
             >
               <LogOutIcon className="h-4 w-4" />
               <span>{todayStatus?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
@@ -216,61 +210,121 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Main Content Area: Calendar View vs Grid Cards View */}
-      {viewMode === 'calendar' ? (
-        /* Interactive Calendar Month Grid */
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-          {/* Month Header Navigation */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-black text-slate-900">
-                {monthNames[month]} {year}
-              </h3>
-              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 border border-indigo-100">
-                Attendance Calendar
-              </span>
-            </div>
+      {/* Employee Selector Bar (HR & Manager Only) */}
+      {(role === 'HR' || role === 'Manager') && (
+        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Select Employee to View Individual Calendar ({employeesList.length} Staff)
+            </span>
+          </div>
 
-            <div className="flex items-center gap-2">
+          {/* Quick Select Employee Chips */}
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+            {employeesList.map((emp) => {
+              const isSelected = emp._id === selectedEmployeeId;
+              return (
+                <button
+                  key={emp._id}
+                  onClick={() => handleEmployeeSelect(emp)}
+                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 border ${
+                    isSelected
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
+                      : 'bg-sky-50 text-slate-700 border-blue-100 hover:bg-blue-100/60'
+                  }`}
+                >
+                  <div
+                    className={`flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black ${
+                      isSelected ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+                    }`}
+                  >
+                    {emp.fullName.charAt(0)}
+                  </div>
+                  <span>{emp.fullName}</span>
+                  <span className={`text-[10px] font-mono ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                    ({emp.employeeId})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Individual Employee Calendar Card */}
+      <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm space-y-6">
+        {/* Selected Employee Calendar Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-lg shadow-sm">
+              {selectedEmployee?.fullName?.charAt(0) || user?.fullName?.charAt(0)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-black text-slate-900">
+                  {selectedEmployee?.fullName || user?.fullName}'s Attendance Calendar
+                </h3>
+                <Badge variant={selectedEmployee?.role || user?.role} size="xs">
+                  {selectedEmployee?.role || user?.role}
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-500 font-medium">
+                {selectedEmployee?.employeeId || user?.employeeId} • {selectedEmployee?.department || user?.department} ({selectedEmployee?.designation || user?.designation})
+              </p>
+            </div>
+          </div>
+
+          {/* Month Navigation */}
+          <div className="flex items-center gap-3">
+            <h4 className="text-base font-extrabold text-slate-900">
+              {monthNames[month]} {year}
+            </h4>
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                className="flex items-center gap-1 rounded-xl border border-blue-100 bg-sky-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-100 transition-all"
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>Prev Month</span>
+                <span>Prev</span>
               </button>
               <button
                 onClick={handleNextMonth}
-                className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                className="flex items-center gap-1 rounded-xl border border-blue-100 bg-sky-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-100 transition-all"
               >
-                <span>Next Month</span>
+                <span>Next</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Calendar Grid Header (Days of Week) */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-black uppercase text-slate-400">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
+        {/* Days of Week Header */}
+        <div className="grid grid-cols-7 gap-2 text-center text-xs font-black uppercase tracking-wider text-slate-400">
+          <div>Sun</div>
+          <div>Mon</div>
+          <div>Tue</div>
+          <div>Wed</div>
+          <div>Thu</div>
+          <div>Fri</div>
+          <div>Sat</div>
+        </div>
+
+        {/* Individual Calendar Month Day Cells */}
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
-
-          {/* Calendar Day Cells Grid */}
-          <div className="grid grid-cols-7 gap-2">
-            {/* Empty Slots before month start */}
+        ) : (
+          <div className="grid grid-cols-7 gap-2.5">
+            {/* Empty Slots before 1st of month */}
             {Array.from({ length: firstDayOfMonth }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="h-24 rounded-2xl bg-slate-50/40 border border-slate-100" />
+              <div key={`empty-${idx}`} className="h-28 rounded-2xl bg-sky-50/40 border border-slate-100" />
             ))}
 
-            {/* Days in Month */}
+            {/* Day Cells 1-31 */}
             {Array.from({ length: daysInMonth }).map((_, idx) => {
               const dayNum = idx + 1;
-              const dayLogs = getLogsForDate(dayNum);
+              const log = getLogForDate(dayNum);
               const isToday =
                 new Date().getDate() === dayNum &&
                 new Date().getMonth() === month &&
@@ -279,140 +333,52 @@ const AttendancePage = () => {
               return (
                 <div
                   key={`day-${dayNum}`}
-                  className={`h-24 rounded-2xl border p-2 flex flex-col justify-between transition-all ${
+                  className={`h-28 rounded-2xl border p-2.5 flex flex-col justify-between transition-all ${
                     isToday
-                      ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-600/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-500/20'
+                      : log
+                      ? 'border-emerald-200 bg-emerald-50/20'
+                      : 'border-slate-200 bg-white hover:border-blue-200'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-black ${isToday ? 'text-indigo-700' : 'text-slate-800'}`}>
+                    <span className={`text-xs font-black ${isToday ? 'text-blue-700' : 'text-slate-800'}`}>
                       {dayNum}
                     </span>
                     {isToday && (
-                      <span className="text-[9px] font-extrabold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-full">
                         Today
                       </span>
                     )}
                   </div>
 
-                  {/* Attendance Log Pills inside Calendar Cell */}
-                  <div className="space-y-1 overflow-y-auto max-h-14">
-                    {dayLogs.length === 0 ? (
-                      <span className="text-[10px] text-slate-400 font-medium italic block">-</span>
+                  {/* Day Shift Log Data */}
+                  <div className="mt-1 flex-1 flex flex-col justify-center">
+                    {!log ? (
+                      <div className="text-[10px] text-slate-300 font-semibold italic text-center">No Shift</div>
                     ) : (
-                      dayLogs.map((log) => (
-                        <div
-                          key={log._id}
-                          className="rounded-lg bg-emerald-50 border border-emerald-200 p-1 text-[10px] font-bold text-emerald-800 flex items-center justify-between"
-                        >
-                          <span className="truncate max-w-[80px]">
-                            {role === 'HR' || role === 'Manager' ? log.employeeId?.fullName : 'Present'}
-                          </span>
-                          <span className="font-mono text-[9px]">
-                            {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In'}
-                          </span>
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-1.5 space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-black text-emerald-800">
+                          <span>{log.status}</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                         </div>
-                      ))
+                        <div className="text-[9px] font-mono text-emerald-900 font-bold space-y-0.5">
+                          <div>
+                            In: {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          </div>
+                          <div>
+                            Out: {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Office'}
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      ) : (
-        /* Responsive Grid Cards View with Pagination */
-        <div className="space-y-6">
-          {loading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-            </div>
-          ) : attendanceLogs.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-              <p className="text-sm font-extrabold text-slate-500">No attendance records found.</p>
-            </div>
-          ) : (
-            <>
-              {/* Responsive Grid Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {paginatedLogs.map((log) => (
-                  <div
-                    key={log._id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3 hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div>
-                        <span className="font-extrabold text-slate-900 text-sm">
-                          {log.employeeId?.fullName || 'Staff Member'}
-                        </span>
-                        <p className="text-xs text-slate-500 font-mono">
-                          {log.employeeId?.employeeId} • {log.employeeId?.department}
-                        </p>
-                      </div>
-                      <Badge variant={log.status} size="xs">{log.status}</Badge>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                      <div className="rounded-xl bg-slate-50 p-2.5">
-                        <span className="text-slate-400 font-bold text-[10px] block">Check In</span>
-                        <span className="font-mono font-black text-emerald-600">
-                          {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                        </span>
-                      </div>
-
-                      <div className="rounded-xl bg-slate-50 p-2.5">
-                        <span className="text-slate-400 font-bold text-[10px] block">Check Out</span>
-                        <span className="font-mono font-black text-indigo-600">
-                          {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Office'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between pt-1">
-                      <span>Date: <strong className="text-slate-900">{log.date}</strong></span>
-                      {log.remarks && <span className="text-slate-500 italic">"{log.remarks}"</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Grid View Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <span className="text-xs font-bold text-slate-500">
-                    Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, attendanceLogs.length)} of {attendanceLogs.length} attendance records
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition-all"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span>Previous</span>
-                    </button>
-
-                    <div className="text-xs font-black text-slate-700 px-2">
-                      Page {currentPage} of {totalPages}
-                    </div>
-
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition-all"
-                    >
-                      <span>Next</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

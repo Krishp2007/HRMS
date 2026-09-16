@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    @apply bg-slate-100/70 text-slate-900 font-sans antialiased min-h-screen selection:bg-blue-600 selection:text-white;
+  html, body, #root {
+    @apply bg-sky-50/80 text-slate-900 font-sans antialiased min-h-screen selection:bg-blue-600 selection:text-white;
+    background-color: #f0f9ff !important;
   }
 }
 
-/* Custom crisp light blue scrollbar styling */
+/* Custom crisp bright blue scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -17,10 +18,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #bae6fd;
+  background: #93c5fd;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: #3b82f6;
 }

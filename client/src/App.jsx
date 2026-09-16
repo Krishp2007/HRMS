@@ -15,8 +15,8 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-sky-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
       </div>
     );
   }
@@ -30,12 +30,12 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white flex flex-col">
+    <div className="min-h-screen bg-sky-50/70 text-slate-900 selection:bg-blue-600 selection:text-white flex flex-col font-sans">
       <Navbar />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-blue-100 bg-white/80 py-4 text-center text-xs text-slate-500 font-medium">
         AppTrait HRMS Operations • Practical Assessment • AppTrait Solutions
       </footer>
     </div>
