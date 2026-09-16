@@ -717,13 +717,6 @@ const AttendancePage = () => {
                 <p className="text-xs text-slate-600 font-medium">No shift check-in or time-off request recorded for this date.</p>
               </div>
             )}
-
-            <button
-              onClick={() => setSelectedDayModalData(null)}
-              className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-black text-white hover:bg-blue-700 transition-all shadow-sm"
-            >
-              Close Details
-            </button>
           </div>
         )}
       </Modal>
