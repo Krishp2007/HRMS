@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Users,
+  Search,
   Calendar as CalendarIcon,
   Tag,
   FileText,
@@ -31,6 +33,10 @@ const LeaveManagementPage = () => {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Mode switcher for HR & Manager: 'staff' for reviewing team/company requests, 'my' for personal leaves
+  const [leaveViewMode, setLeaveViewMode] = useState('staff');
 
   // Synchronize statusFilter with URL search parameters (e.g. /leaves?status=Pending or /leaves?status=Approved)
   useEffect(() => {
@@ -76,14 +82,14 @@ const LeaveManagementPage = () => {
     try {
       setLoading(true);
       let res;
-      if (role === 'HR') {
+      if (leaveViewMode === 'my' || role === 'Employee') {
+        res = await api.get('/leaves/my-requests');
+      } else if (role === 'HR') {
         res = await api.get('/leaves/all-requests');
       } else if (role === 'Manager') {
         res = await api.get('/leaves/team-requests');
-      } else {
-        res = await api.get('/leaves/my-requests');
       }
-      setLeaves(res.data);
+      setLeaves(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to fetch leave requests:', err);
     } finally {
@@ -93,14 +99,14 @@ const LeaveManagementPage = () => {
 
   useEffect(() => {
     fetchLeaves();
-  }, [role]);
+  }, [role, leaveViewMode]);
 
   const handleApplySubmit = async (e) => {
     e.preventDefault();
     setApplyError('');
 
-    if (!leaveData.startDate || !leaveData.endDate || !leaveData.reason) {
-      setApplyError('Please fill in all mandatory fields.');
+    if (!leaveData.startDate || !leaveData.endDate) {
+      setApplyError('Please select both start and end dates.');
       return;
     }
 
@@ -109,9 +115,15 @@ const LeaveManagementPage = () => {
       return;
     }
 
+    if (!leaveData.reason.trim()) {
+      setApplyError('Please provide a reason for your leave request.');
+      return;
+    }
+
     setApplyLoading(true);
+
     try {
-      await api.post('/leaves', leaveData);
+      await api.post('/leaves/apply', leaveData);
       setIsApplyModalOpen(false);
       setLeaveData({
         leaveType: 'Casual',
@@ -121,7 +133,7 @@ const LeaveManagementPage = () => {
       });
       fetchLeaves();
     } catch (err) {
-      setApplyError(err.response?.data?.message || 'Failed to submit leave application.');
+      setApplyError(err.response?.data?.message || 'Failed to submit leave request.');
     } finally {
       setApplyLoading(false);
     }
@@ -182,8 +194,13 @@ const LeaveManagementPage = () => {
 
   // Filtered & Paginated List
   const filteredLeaves = leaves.filter((leave) => {
-    if (!statusFilter) return true;
-    return leave.status === statusFilter;
+    const matchesStatus = !statusFilter || leave.status === statusFilter;
+    const query = searchTerm.toLowerCase();
+    const empName = leave.employeeId?.fullName?.toLowerCase() || '';
+    const empId = leave.employeeId?.employeeId?.toLowerCase() || '';
+    const reason = leave.reason?.toLowerCase() || '';
+    const matchesSearch = !searchTerm || empName.includes(query) || empId.includes(query) || reason.includes(query);
+    return matchesStatus && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredLeaves.length / ITEMS_PER_PAGE) || 1;
@@ -210,33 +227,105 @@ const LeaveManagementPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Leave Requests</h2>
-          <p className="text-xs font-bold text-slate-700">Apply for time-off, track progress, and manage leave approvals</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Leave Management</h2>
+          <p className="text-xs font-bold text-slate-700">
+            {leaveViewMode === 'my' || role === 'Employee'
+              ? 'Apply for time-off and track your personal leave application status'
+              : 'Review staff time-off applications, approve or reject leave requests'}
+          </p>
         </div>
 
-        <button
-          onClick={() => setIsApplyModalOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>Apply For Leave</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {(role === 'HR' || role === 'Manager') && (
+            <div className="flex items-center gap-1.5 bg-blue-50/80 p-1 rounded-2xl border border-blue-200 shadow-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setLeaveViewMode('staff');
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  leaveViewMode === 'staff'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span>Staff Requests</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLeaveViewMode('my');
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  leaveViewMode === 'my'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <User className="h-3.5 w-3.5" />
+                <span>My Personal Leaves</span>
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsApplyModalOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all cursor-pointer"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Apply For Leave</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h3 className="text-sm font-black text-slate-900">
-          {role === 'Employee' ? 'My Time-Off Applications' : 'Company Leave Applications'}
+      {/* Filter & Search Bar */}
+      <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h3 className="text-sm font-black text-slate-900 shrink-0">
+          {role === 'Employee' || leaveViewMode === 'my'
+            ? 'My Personal Applications'
+            : 'Staff Leave Applications'}
         </h3>
 
-        <div className="w-full sm:w-64">
-          <Select
-            options={statusFilterOptions}
-            value={statusFilter}
-            onChange={handleStatusFilterChange}
-            placeholder="All Statuses"
-            icon={Filter}
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto flex-1 justify-end">
+          {/* Staff Search input by name or employee ID */}
+          {(role === 'HR' || role === 'Manager') && leaveViewMode === 'staff' && (
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search staff by name or unique ID..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full rounded-xl border border-blue-200 bg-sky-50/70 pl-10 pr-8 py-2 text-xs font-bold text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-slate-800 bg-slate-200/80 rounded-full h-4 w-4 flex items-center justify-center transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="w-full sm:w-56">
+            <Select
+              options={statusFilterOptions}
+              value={statusFilter}
+              onChange={handleStatusFilterChange}
+              placeholder="All Statuses"
+              icon={Filter}
+            />
+          </div>
         </div>
       </div>
 
