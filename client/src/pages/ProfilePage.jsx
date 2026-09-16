@@ -14,14 +14,22 @@ import {
   Clock,
   CalendarDays,
   Lock,
+  KeyRound,
+  AlertCircle,
 } from 'lucide-react';
 
 const ProfilePage = () => {
   const { user, setUser } = useAuth();
   const [profileData, setProfileData] = useState(null);
+
+  // Form Fields
   const [phone, setPhone] = useState(user?.phone || '');
-  const [password, setPassword] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [savingPass, setSavingPass] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -40,41 +48,74 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  const handleUpdateProfile = async (e) => {
+  const handleUpdatePhone = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setSavingPhone(true);
     setMessage('');
     setError('');
 
     try {
-      const updatePayload = { phone };
-      if (password.trim()) {
-        updatePayload.password = password;
-      }
-
-      const res = await api.put(`/employees/${user._id}`, updatePayload);
+      const res = await api.put(`/employees/${user._id}`, { phone });
       setUser(res.data);
       localStorage.setItem('user', JSON.stringify(res.data));
-      setMessage('✅ Profile details updated successfully!');
-      setPassword('');
+      setMessage('✅ Phone number updated successfully!');
       fetchFullSelfProfile();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile.');
+      setError(err.response?.data?.message || 'Failed to update phone number.');
     } finally {
-      setSaving(false);
+      setSavingPhone(false);
     }
   };
 
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setError('');
+
+    if (!oldPassword) {
+      setError('Please enter your current password.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('New password and Confirm password do not match.');
+      return;
+    }
+
+    setSavingPass(true);
+
+    try {
+      await api.put(`/employees/${user._id}`, {
+        oldPassword,
+        newPassword,
+      });
+
+      setMessage('✅ Password changed successfully!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to change password.');
+    } finally {
+      setSavingPass(false);
+    }
+  };
+
+  const fullUser = profileData?.user || user;
   const attendanceCount = profileData?.attendance?.length || 0;
   const leaveCount = profileData?.leaves?.length || 0;
-  const fullUser = profileData?.user || user;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tight">My Profile & Workspace</h2>
-        <p className="text-xs text-slate-400">Complete personal employment record, manager details & credentials</p>
+        <h2 className="text-2xl font-black text-white tracking-tight">Account Profile & Security</h2>
+        <p className="text-xs text-slate-400">View personal employment details, manager hierarchy, and manage security credentials</p>
       </div>
 
       {message && (
@@ -85,16 +126,17 @@ const ProfilePage = () => {
       )}
 
       {error && (
-        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-bold text-rose-400">
-          {error}
+        <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-bold text-rose-400">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Profile Header Card */}
-      <div className="rounded-3xl border border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 p-8 backdrop-blur-2xl shadow-2xl space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-800 pb-6">
+      {/* Main Profile Identity Card */}
+      <div className="rounded-3xl border border-slate-800/80 bg-slate-900/60 p-8 backdrop-blur-xl shadow-2xl space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-800/80 pb-6">
           <div className="flex items-center gap-5">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white font-extrabold text-2xl shadow-xl ring-4 ring-indigo-500/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white font-black text-2xl shadow-xl ring-4 ring-indigo-500/20">
               {fullUser?.fullName?.charAt(0)}
             </div>
             <div>
@@ -109,17 +151,17 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Detailed Attribute Grid */}
+        {/* Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Email Address</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Mail className="h-4 w-4 text-indigo-400" />
-              <span>{fullUser?.email}</span>
+              <span className="truncate">{fullUser?.email}</span>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Phone Number</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Phone className="h-4 w-4 text-indigo-400" />
@@ -127,7 +169,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Joining Date</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Calendar className="h-4 w-4 text-indigo-400" />
@@ -135,7 +177,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Department</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Building className="h-4 w-4 text-indigo-400" />
@@ -143,7 +185,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Reporting Manager</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Briefcase className="h-4 w-4 text-indigo-400" />
@@ -151,45 +193,90 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
             <span className="text-slate-500 font-bold block mb-1">Logged Shifts</span>
             <div className="flex items-center gap-2 text-white font-semibold">
               <Clock className="h-4 w-4 text-emerald-400" />
-              <span>{attendanceCount} Shift Logs</span>
+              <span>{attendanceCount} Total Shift Logs</span>
             </div>
           </div>
         </div>
 
-        {/* Update Form */}
-        <div className="border-t border-slate-800 pt-6">
-          <h4 className="text-sm font-bold text-white mb-4">Edit Personal Contact & Password</h4>
-          <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
+        {/* Update Contact Form */}
+        <div className="border-t border-slate-800/80 pt-6">
+          <h4 className="text-sm font-bold text-white mb-3">Update Contact Information</h4>
+          <form onSubmit={handleUpdatePhone} className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Phone className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter new phone number"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={savingPhone}
+              className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-500 disabled:opacity-50 transition-all"
+            >
+              {savingPhone ? 'Saving...' : 'Update Phone'}
+            </button>
+          </form>
+        </div>
+
+        {/* Secure Password Change Section */}
+        <div className="border-t border-slate-800/80 pt-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-indigo-400" />
+            <h4 className="text-sm font-bold text-white">Change Account Password</h4>
+          </div>
+
+          <form onSubmit={handleUpdatePassword} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Current Password *</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                <input
+                  type="password"
+                  required
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Phone Number</label>
+                <label className="block text-slate-400 font-semibold mb-1">New Password *</label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                  <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                   <input
-                    type="text"
+                    type="password"
                     required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter phone number"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 pl-10 pr-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full rounded-xl border border-slate-700/80 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">New Password (Optional)</label>
+                <label className="block text-slate-400 font-semibold mb-1">Confirm New Password *</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                   <input
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Leave blank to keep current password"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 pl-10 pr-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    className="w-full rounded-xl border border-slate-700/80 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -197,10 +284,10 @@ const ProfilePage = () => {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={savingPass}
               className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/20 hover:opacity-95 disabled:opacity-50 transition-all"
             >
-              {saving ? 'Saving...' : 'Save Profile Changes'}
+              {savingPass ? 'Verifying & Updating...' : 'Update Password Credentials'}
             </button>
           </form>
         </div>

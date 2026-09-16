@@ -134,7 +134,7 @@ const getEmployeeById = async (req, res) => {
   }
 };
 
-// @desc    Update employee
+// @desc    Update employee (includes oldPassword validation when changing password)
 // @route   PUT /api/employees/:id
 // @access  Private (HR, Employee self for limited fields)
 const updateEmployee = async (req, res) => {
@@ -145,16 +145,28 @@ const updateEmployee = async (req, res) => {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    // Employee self update rules
-    if (req.user.role === 'Employee') {
-      if (req.user._id.toString() !== employee._id.toString()) {
-        return res.status(403).json({ message: 'Access denied' });
+    // Security check: only HR or the user themselves can edit
+    if (req.user.role !== 'HR' && req.user._id.toString() !== employee._id.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Secure Password Change Verification
+    if (req.body.newPassword) {
+      if (!req.body.oldPassword) {
+        return res.status(400).json({ message: 'Current password is required to change password.' });
       }
-      // Allow self to update phone or full name only
+      const isMatch = await employee.matchPassword(req.body.oldPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect.' });
+      }
+      employee.password = req.body.newPassword;
+    }
+
+    // Self update rules vs HR update rules
+    if (req.user._id.toString() === employee._id.toString() && req.user.role !== 'HR') {
       if (req.body.phone) employee.phone = req.body.phone;
       if (req.body.fullName) employee.fullName = req.body.fullName;
     } else if (req.user.role === 'HR') {
-      // HR full update rules
       employee.fullName = req.body.fullName || employee.fullName;
       employee.email = req.body.email || employee.email;
       employee.phone = req.body.phone || employee.phone;
@@ -163,11 +175,6 @@ const updateEmployee = async (req, res) => {
       employee.designation = req.body.designation || employee.designation;
       employee.managerId = req.body.managerId !== undefined ? req.body.managerId : employee.managerId;
       employee.joiningDate = req.body.joiningDate || employee.joiningDate;
-      if (req.body.password) {
-        employee.password = req.body.password; // Pre-save hook will hash it
-      }
-    } else {
-      return res.status(403).json({ message: 'Access denied' });
     }
 
     const updatedEmployee = await employee.save();
