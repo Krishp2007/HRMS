@@ -2,9 +2,9 @@
 
 A full-stack Role-Based HRMS built for SaaS companies to streamline employee directory management, daily attendance tracking, leave request workflows, and dynamic dashboards.
 
-> **Assessment Submission**: AppTrait Solutions - Vibe Coder Practical Assessment
-> **Live Frontend**: [https://hrms-apptrait.vercel.app](https://hrms-apptrait.vercel.app)
-> **Live Backend API**: [https://hrms-zefl.onrender.com/api/health](https://hrms-zefl.onrender.com/api/health)
+> **Assessment Submission**: AppTrait Solutions - Vibe Coder Practical Assessment  
+> **Live Frontend**: [https://hrms-apptrait.vercel.app](https://hrms-apptrait.vercel.app)  
+> **Live Backend API**: [https://hrms-zefl.onrender.com/api/health](https://hrms-zefl.onrender.com/api/health)  
 > **Repository**: [Krishp2007/HRMS](https://github.com/Krishp2007/HRMS)  
 > **Tech Stack**: MERN (MongoDB, Express.js, React.js, Node.js) + Tailwind CSS + JWT Authentication
 
