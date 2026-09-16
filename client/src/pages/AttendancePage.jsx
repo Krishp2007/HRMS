@@ -18,6 +18,7 @@ import {
   Briefcase,
   Sun,
   Umbrella,
+  Search,
 } from 'lucide-react';
 
 const AttendancePage = () => {
@@ -27,6 +28,7 @@ const AttendancePage = () => {
   const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [empSearchTerm, setEmpSearchTerm] = useState('');
 
   const [attendanceLogs, setAttendanceLogs] = useState([]);
   const [leaveRecords, setLeaveRecords] = useState([]);
@@ -298,56 +300,92 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Employee Selector Bar (HR & Manager Only) */}
+      {/* Searchable Employee Selector Bar (HR & Manager Only) */}
       {(role === 'HR' || role === 'Manager') && (
         <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-800 block">
-            Select Employee ({employeesList.length} Staff)
-          </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+              Find & Select Employee ({employeesList.length} Total Staff)
+            </span>
+            {selectedEmployee && (
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 w-fit truncate">
+                Viewing: <strong className="font-black">{selectedEmployee.fullName}</strong> ({selectedEmployee.employeeId})
+              </span>
+            )}
+          </div>
 
-          {/* Mobile: Custom Select Dropdown */}
-          <div className="sm:hidden">
-            <Select
-              options={employeeOptions}
-              value={selectedEmployeeId}
-              onChange={(val) => {
-                const emp = employeesList.find((e) => e._id === val);
-                if (emp) handleEmployeeSelect(emp);
-              }}
-              placeholder="Choose employee..."
-              icon={User}
+          {/* Search Input by Name or Unique Employee ID */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search staff by name or unique ID (e.g. John Doe, EMP-1004)..."
+              value={empSearchTerm}
+              onChange={(e) => setEmpSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-blue-200 bg-sky-50/70 pl-10 pr-9 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-500 transition-all"
             />
+            {empSearchTerm && (
+              <button
+                type="button"
+                onClick={() => setEmpSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-slate-800 bg-slate-200/80 rounded-full h-4 w-4 flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          {/* Desktop: Horizontal Chip Selector */}
-          <div className="hidden sm:flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
-            {employeesList.map((emp) => {
-              const isSelected = emp._id === selectedEmployeeId;
+          {/* Filtered Chips / Options */}
+          {(() => {
+            const filteredStaff = employeesList.filter((emp) => {
+              const query = empSearchTerm.toLowerCase();
               return (
-                <button
-                  key={emp._id}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black transition-all shrink-0 border ${
-                    isSelected
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
-                      : 'bg-sky-50 text-slate-900 border-blue-200 hover:bg-blue-100'
-                  }`}
-                >
-                  <div
-                    className={`flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black ${
-                      isSelected ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'
-                    }`}
-                  >
-                    {emp.fullName.charAt(0)}
-                  </div>
-                  <span>{emp.fullName}</span>
-                  <span className={`text-[10px] font-mono font-black ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
-                    ({emp.employeeId})
-                  </span>
-                </button>
+                emp.fullName?.toLowerCase().includes(query) ||
+                emp.employeeId?.toLowerCase().includes(query) ||
+                emp.department?.toLowerCase().includes(query)
               );
-            })}
-          </div>
+            });
+
+            if (filteredStaff.length === 0) {
+              return (
+                <p className="text-xs font-bold text-slate-500 py-2 text-center italic">
+                  No staff member found matching "{empSearchTerm}"
+                </p>
+              );
+            }
+
+            return (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                {filteredStaff.map((emp) => {
+                  const isSelected = emp._id === selectedEmployeeId;
+                  return (
+                    <button
+                      key={emp._id}
+                      type="button"
+                      onClick={() => handleEmployeeSelect(emp)}
+                      className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black transition-all shrink-0 border ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
+                          : 'bg-sky-50 text-slate-900 border-blue-200 hover:bg-blue-100'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black ${
+                          isSelected ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'
+                        }`}
+                      >
+                        {emp.fullName.charAt(0)}
+                      </div>
+                      <span>{emp.fullName}</span>
+                      <span className={`text-[10px] font-mono font-black ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
+                        ({emp.employeeId})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

@@ -318,15 +318,19 @@ const EmployeesList = () => {
             {paginatedEmployees.map((emp) => (
               <div
                 key={emp._id}
-                className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
+                onClick={() => {
+                  setSelectedProfileId(emp._id);
+                  setIsProfileModalOpen(true);
+                }}
+                className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-blue-400 transition-all flex flex-col justify-between space-y-3 sm:space-y-4 cursor-pointer group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-base shadow-sm">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-base shadow-sm group-hover:scale-105 transition-transform">
                       {emp.fullName.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 text-sm leading-tight">{emp.fullName}</h3>
+                      <h3 className="font-black text-slate-900 text-sm leading-tight group-hover:text-blue-600 transition-colors">{emp.fullName}</h3>
                       <p className="text-xs font-mono font-black text-blue-700 mt-0.5">{emp.employeeId}</p>
                     </div>
                   </div>
@@ -342,28 +346,35 @@ const EmployeesList = () => {
                 {/* Card Action Buttons */}
                 <div className="flex items-center justify-between pt-1">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedProfileId(emp._id);
                       setIsProfileModalOpen(true);
                     }}
                     className="flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 px-2.5 sm:px-3 py-1.5 text-xs font-black text-blue-900 hover:bg-blue-100 transition-all"
                   >
                     <Eye className="h-3.5 w-3.5 text-blue-700" />
-                    <span className="hidden sm:inline">View Deep Profile</span>
+                    <span className="hidden sm:inline">View Profile Details</span>
                     <span className="sm:hidden">Profile</span>
                   </button>
 
                   {role === 'HR' && (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => openEditModal(emp)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(emp);
+                        }}
                         className="p-1.5 rounded-lg text-slate-700 hover:bg-sky-100 hover:text-blue-700 transition-colors"
                         title="Edit Employee"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => openStatusConfirmModal(emp)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openStatusConfirmModal(emp);
+                        }}
                         className={`p-1.5 rounded-lg transition-colors ${
                           emp.status === 'Active'
                             ? 'text-rose-700 hover:bg-rose-50'
