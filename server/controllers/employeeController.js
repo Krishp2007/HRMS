@@ -53,17 +53,28 @@ const addEmployee = async (req, res) => {
 // @access  Private (HR, Manager)
 const getEmployees = async (req, res) => {
   try {
-    const { search, department, status } = req.query;
+    const { search, department, role, status } = req.query;
 
     let query = {};
 
-    // Manager can only view employees assigned to their team
+    // Manager strict access control: can ONLY view employees assigned to their team in their department
     if (req.user.role === 'Manager') {
+      if (department && req.user.department && department !== req.user.department) {
+        return res.status(403).json({
+          message: 'Unauthorized. Managers can only access employees in their assigned department.',
+        });
+      }
       query.managerId = req.user._id;
-    }
-
-    if (department) {
-      query.department = department;
+      if (req.user.department) {
+        query.department = req.user.department;
+      }
+    } else {
+      if (department) {
+        query.department = department;
+      }
+      if (role) {
+        query.role = role;
+      }
     }
 
     if (status) {

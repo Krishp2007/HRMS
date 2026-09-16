@@ -273,7 +273,7 @@ const EmployeesList = () => {
 
       {/* Filter & Search Bar with Custom Select Dropdowns */}
       <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${role === 'HR' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3 items-center`}>
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
             <input
@@ -288,26 +288,35 @@ const EmployeesList = () => {
             />
           </div>
 
-          <Select
-            options={departmentOptions}
-            value={departmentFilter}
-            onChange={(val) => {
-              setDepartmentFilter(val);
-              setCurrentPage(1);
-            }}
-            placeholder="All Departments"
-            icon={Filter}
-          />
+          {role === 'HR' ? (
+            <>
+              <Select
+                options={departmentOptions}
+                value={departmentFilter}
+                onChange={(val) => {
+                  setDepartmentFilter(val);
+                  setCurrentPage(1);
+                }}
+                placeholder="All Departments"
+                icon={Filter}
+              />
 
-          <Select
-            options={roleOptions}
-            value={roleFilter}
-            onChange={(val) => {
-              setRoleFilter(val);
-              setCurrentPage(1);
-            }}
-            placeholder="All Roles"
-          />
+              <Select
+                options={roleOptions}
+                value={roleFilter}
+                onChange={(val) => {
+                  setRoleFilter(val);
+                  setCurrentPage(1);
+                }}
+                placeholder="All Roles"
+              />
+            </>
+          ) : (
+            <div className="flex items-center gap-2 bg-sky-50 px-3.5 py-2.5 rounded-xl border border-blue-200 text-xs font-black text-blue-900">
+              <Filter className="h-3.5 w-3.5 text-blue-600" />
+              <span>Department: <strong className="font-black text-slate-900">{user?.department || 'Assigned Team'}</strong></span>
+            </div>
+          )}
 
           <Select
             options={statusOptions}
@@ -353,15 +362,7 @@ const EmployeesList = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant={emp.status} size="xs">{emp.status}</Badge>
-                    {todayPresentSet.has(emp._id) && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Present
-                      </span>
-                    )}
-                  </div>
+                  <Badge variant={emp.status} size="xs">{emp.status}</Badge>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-b border-slate-100 py-2 text-xs font-black text-slate-800">
