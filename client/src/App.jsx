@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EmployeesList from './pages/EmployeesList';
@@ -10,7 +9,7 @@ import AttendancePage from './pages/AttendancePage';
 import LeaveManagementPage from './pages/LeaveManagementPage';
 import ProfilePage from './pages/ProfilePage';
 
-// Protected Route Guard Component
+// Protected Layout Guard
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
@@ -31,12 +30,14 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white flex flex-col">
       <Navbar />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">{children}</main>
-      </div>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        AppTrait HRMS Operations • Practical Assessment • AppTrait Solutions
+      </footer>
     </div>
   );
 };

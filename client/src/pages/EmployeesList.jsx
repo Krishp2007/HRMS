@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
-import { Search, Plus, Edit2, Power, UserPlus, Mail, Phone, Building, Shield } from 'lucide-react';
+import EmployeeProfileModal from '../components/EmployeeProfileModal';
+import { Search, Plus, Edit2, Power, UserPlus, Mail, Phone, Eye } from 'lucide-react';
 
 const EmployeesList = () => {
   const { user } = useAuth();
@@ -13,9 +14,12 @@ const EmployeesList = () => {
   const [search, setSearch] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [error, setError] = useState('');
 
-  // Modal State
+  // Profile View Modal State
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Edit / Add Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -45,7 +49,7 @@ const EmployeesList = () => {
       const res = await api.get(`/employees?${queryParams.toString()}`);
       setEmployees(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch employees list.');
+      console.error('Failed to fetch employees list:', err);
     } finally {
       setLoading(false);
     }
@@ -104,13 +108,18 @@ const EmployeesList = () => {
     }
   };
 
+  const openProfileView = (empId) => {
+    setSelectedProfileId(empId);
+    setIsProfileModalOpen(true);
+  };
+
   const openEditModal = (emp) => {
     setSelectedEmployee(emp);
     setFormData({
       employeeId: emp.employeeId,
       fullName: emp.fullName,
       email: emp.email,
-      password: '', // leave empty unless changing
+      password: '',
       phone: emp.phone,
       role: emp.role,
       department: emp.department,
@@ -143,8 +152,8 @@ const EmployeesList = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">Employee Directory</h2>
-          <p className="text-xs text-slate-400">Manage company staff, role permissions & reporting lines</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">Employee Directory</h2>
+          <p className="text-xs text-slate-400">Click on any employee row to open their full interactive profile details</p>
         </div>
         {isHR && (
           <button
@@ -152,7 +161,7 @@ const EmployeesList = () => {
               resetForm();
               setIsAddModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:opacity-95"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:opacity-95"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add New Employee</span>
@@ -162,7 +171,6 @@ const EmployeesList = () => {
 
       {/* Filters Bar */}
       <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xl md:grid-cols-4">
-        {/* Search */}
         <div className="relative md:col-span-2">
           <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
           <input
@@ -174,7 +182,6 @@ const EmployeesList = () => {
           />
         </div>
 
-        {/* Department Filter */}
         <select
           value={departmentFilter}
           onChange={(e) => setDepartmentFilter(e.target.value)}
@@ -189,7 +196,6 @@ const EmployeesList = () => {
           <option value="Operations">Operations</option>
         </select>
 
-        {/* Status Filter */}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -217,28 +223,39 @@ const EmployeesList = () => {
               <thead className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="py-3 px-4">Employee</th>
-                  <th className="py-3 px-4">Role / Dept</th>
-                  <th className="py-3 px-4">Manager</th>
-                  <th className="py-3 px-4">Contact</th>
+                  <th className="py-3 px-4">Role & Department</th>
+                  <th className="py-3 px-4">Reporting Manager</th>
+                  <th className="py-3 px-4">Contact Info</th>
                   <th className="py-3 px-4">Status</th>
-                  {isHR && <th className="py-3 px-4 text-right">Actions</th>}
+                  <th className="py-3 px-4 text-right">Profile View</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {employees.map((emp) => (
-                  <tr key={emp._id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr
+                    key={emp._id}
+                    onClick={() => openProfileView(emp._id)}
+                    className="hover:bg-slate-800/60 cursor-pointer transition-all group"
+                  >
                     <td className="py-3.5 px-4">
-                      <div>
-                        <span className="font-semibold text-white">{emp.fullName}</span>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
-                          <span className="font-mono text-indigo-400">{emp.employeeId}</span>
-                          <span>•</span>
-                          <span>{emp.designation}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-bold text-xs shadow-md">
+                          {emp.fullName.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                            {emp.fullName}
+                          </span>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+                            <span className="font-mono text-indigo-400 font-semibold">{emp.employeeId}</span>
+                            <span>•</span>
+                            <span>{emp.designation}</span>
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col items-start gap-1">
                         <Badge variant={emp.role}>{emp.role}</Badge>
                         <span className="text-xs text-slate-400">{emp.department}</span>
                       </div>
@@ -250,7 +267,7 @@ const EmployeesList = () => {
                           <p className="text-slate-500 font-mono">{emp.managerId.employeeId}</p>
                         </div>
                       ) : (
-                        <span className="text-slate-500 italic">None (Root)</span>
+                        <span className="text-slate-500 italic">Root Admin (HR)</span>
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-xs space-y-0.5">
@@ -266,30 +283,39 @@ const EmployeesList = () => {
                     <td className="py-3.5 px-4">
                       <Badge variant={emp.status}>{emp.status}</Badge>
                     </td>
-                    {isHR && (
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEditModal(emp)}
-                            title="Edit Employee"
-                            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 transition-colors"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(emp._id, emp.status)}
-                            title={emp.status === 'Active' ? 'Deactivate Account' : 'Activate Account'}
-                            className={`rounded-lg p-1.5 transition-colors ${
-                              emp.status === 'Active'
-                                ? 'text-emerald-400 hover:bg-rose-500/10 hover:text-rose-400'
-                                : 'text-rose-400 hover:bg-emerald-500/10 hover:text-emerald-400'
-                            }`}
-                          >
-                            <Power className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openProfileView(emp._id)}
+                          className="flex items-center gap-1 rounded-xl bg-slate-800 px-2.5 py-1 text-xs font-semibold text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>View Info</span>
+                        </button>
+                        {isHR && (
+                          <>
+                            <button
+                              onClick={() => openEditModal(emp)}
+                              title="Edit Employee"
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-indigo-400 transition-colors"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(emp._id, emp.status)}
+                              title={emp.status === 'Active' ? 'Deactivate Account' : 'Activate Account'}
+                              className={`rounded-lg p-1.5 transition-colors ${
+                                emp.status === 'Active'
+                                  ? 'text-emerald-400 hover:bg-rose-500/10 hover:text-rose-400'
+                                  : 'text-rose-400 hover:bg-emerald-500/10 hover:text-emerald-400'
+                              }`}
+                            >
+                              <Power className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -297,6 +323,16 @@ const EmployeesList = () => {
           </div>
         )}
       </div>
+
+      {/* Deep Interactive Profile View Modal */}
+      <EmployeeProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        employeeId={selectedProfileId}
+        onEdit={openEditModal}
+        onToggleStatus={handleToggleStatus}
+        isHR={isHR}
+      />
 
       {/* Add / Edit Employee Modal */}
       <Modal

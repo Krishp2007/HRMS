@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
+const LeaveRequest = require('../models/LeaveRequest');
 
 // @desc    Add new employee
 // @route   POST /api/employees
@@ -38,7 +40,7 @@ const addEmployee = async (req, res) => {
 
     const populatedUser = await User.findById(newEmployee._id)
       .select('-password')
-      .populate('managerId', 'fullName email employeeId');
+      .populate('managerId', 'fullName email employeeId designation department');
 
     return res.status(201).json(populatedUser);
   } catch (error) {
@@ -78,7 +80,7 @@ const getEmployees = async (req, res) => {
 
     const employees = await User.find(query)
       .select('-password')
-      .populate('managerId', 'fullName email employeeId')
+      .populate('managerId', 'fullName email employeeId designation department')
       .sort({ createdAt: -1 });
 
     return res.json(employees);
@@ -87,14 +89,14 @@ const getEmployees = async (req, res) => {
   }
 };
 
-// @desc    Get employee by ID
+// @desc    Get complete employee deep profile details (user + attendance + leaves)
 // @route   GET /api/employees/:id
 // @access  Private (HR, Manager of team, Employee self)
 const getEmployeeById = async (req, res) => {
   try {
     const employee = await User.findById(req.params.id)
       .select('-password')
-      .populate('managerId', 'fullName email employeeId');
+      .populate('managerId', 'fullName email employeeId designation department');
 
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -113,7 +115,20 @@ const getEmployeeById = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. You can only view team members.' });
     }
 
-    return res.json(employee);
+    // Fetch deep attendance and leave history for this employee
+    const attendanceHistory = await Attendance.find({ employeeId: employee._id })
+      .sort({ date: -1 })
+      .limit(10);
+
+    const leaveHistory = await LeaveRequest.find({ employeeId: employee._id })
+      .populate('reviewedBy', 'fullName employeeId role')
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      user: employee,
+      attendance: attendanceHistory,
+      leaves: leaveHistory,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -158,7 +173,7 @@ const updateEmployee = async (req, res) => {
     const updatedEmployee = await employee.save();
     const populatedUser = await User.findById(updatedEmployee._id)
       .select('-password')
-      .populate('managerId', 'fullName email employeeId');
+      .populate('managerId', 'fullName email employeeId designation department');
 
     return res.json(populatedUser);
   } catch (error) {
@@ -196,7 +211,7 @@ const toggleEmployeeStatus = async (req, res) => {
 const getManagersList = async (req, res) => {
   try {
     const managers = await User.find({ role: { $in: ['HR', 'Manager'] }, status: 'Active' })
-      .select('fullName employeeId department email role')
+      .select('fullName employeeId department email role designation')
       .sort({ fullName: 1 });
 
     return res.json(managers);
