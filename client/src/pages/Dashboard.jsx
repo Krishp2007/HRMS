@@ -15,8 +15,6 @@ import {
   LogIn,
   LogOut as LogOutIcon,
   ArrowRight,
-  Sparkles,
-  Eye,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
@@ -34,10 +32,10 @@ const Dashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
 
-  // Pending Leave Requests for HR/Manager Direct Approvals
+  // Pending Leave Requests for Direct Approvals Desk
   const [pendingLeaves, setPendingLeaves] = useState([]);
 
-  // Employees Grid Preview for Dashboard
+  // Employees Grid Preview
   const [previewEmployees, setPreviewEmployees] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -108,7 +106,7 @@ const Dashboard = () => {
   };
 
   const handleApproveLeave = async (leaveId) => {
-    if (window.confirm('Approve this leave request directly from dashboard?')) {
+    if (window.confirm('Approve this leave request?')) {
       try {
         await api.patch(`/leaves/${leaveId}/approve`);
         fetchDashboardData();
@@ -132,85 +130,50 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
       </div>
     );
   }
 
   const role = user?.role;
   const metrics = stats?.metrics || {};
-  const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Light Blue Corporate Banner */}
-      <div className="rounded-3xl border border-blue-100 bg-white p-8 shadow-sm space-y-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Clean Header Banner */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <Badge variant={role}>{role} Desk</Badge>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                <Sparkles className="h-3.5 w-3.5 text-sky-600" />
-                Live Workspace
-              </span>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                Welcome back, {user?.fullName}! 👋
+              </h2>
+              <Badge variant={role}>{role}</Badge>
             </div>
-            <h2 className="mt-3 text-3xl font-black text-slate-900 tracking-tight">
-              Welcome back, {user?.fullName}! 👋
-            </h2>
-            <p className="mt-1.5 text-sm font-medium text-slate-600 max-w-xl">
-              {role === 'HR' && 'Corporate human resources administration & workforce overview.'}
-              {role === 'Manager' && 'Team operations oversight, direct attendance tracking & leave review.'}
-              {role === 'Employee' && 'Personal daily attendance check-in/out station & leave hub.'}
+            <p className="mt-1 text-xs font-semibold text-slate-500">
+              {role === 'HR' && 'Corporate human resources & workforce overview.'}
+              {role === 'Manager' && 'Team operations oversight & leave review.'}
+              {role === 'Employee' && 'Personal daily shift check-in & leave portal.'}
             </p>
-          </div>
-
-          {/* Quick Action Navigation Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => navigate('/attendance')}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all"
-            >
-              <Clock className="h-4 w-4" />
-              <span>Attendance Hub</span>
-            </button>
-            <button
-              onClick={() => navigate('/leaves')}
-              className="flex items-center gap-2 rounded-xl border border-blue-100 bg-sky-50/50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-100 transition-all"
-            >
-              <CalendarDays className="h-4 w-4" />
-              <span>Apply / View Leave</span>
-            </button>
-            {(role === 'HR' || role === 'Manager') && (
-              <button
-                onClick={() => navigate('/employees')}
-                className="flex items-center gap-2 rounded-xl border border-blue-100 bg-sky-50/50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-100 transition-all"
-              >
-                <Users className="h-4 w-4" />
-                <span>Directory</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Interactive Shift Tracker Station */}
-      <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Shift Check-In / Check-Out Station */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
-            <Clock className="h-4 w-4" />
-            <span>Shift Attendance Tracker</span>
-          </div>
-          <h3 className="text-xl font-black text-slate-900 mt-1">
+          <span className="text-xs font-bold text-blue-600">Daily Attendance</span>
+          <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">
             {!todayAttendance?.isCheckedIn
               ? 'Ready to start your shift today?'
               : !todayAttendance?.isCheckedOut
               ? 'Shift Active • In Office'
               : 'Shift Completed Today! 🎉'}
           </h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 font-medium">
             {todayAttendance?.attendanceRecord?.checkInTime
               ? `Check-In Time: ${new Date(todayAttendance.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'No check-in recorded yet for today.'}
+              : 'No check-in recorded yet today.'}
           </p>
           {actionMsg && <p className="text-xs font-bold text-emerald-600 mt-1">{actionMsg}</p>}
         </div>
@@ -222,30 +185,30 @@ const Dashboard = () => {
             className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
           >
             <LogIn className="h-4 w-4" />
-            <span>{todayAttendance?.isCheckedIn ? 'Checked In' : 'Check In Now'}</span>
+            <span>{todayAttendance?.isCheckedIn ? 'Checked In' : 'Check In'}</span>
           </button>
           <button
             onClick={handleCheckOut}
             disabled={actionLoading || !todayAttendance?.isCheckedIn || todayAttendance?.isCheckedOut}
-            className="flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-sky-700 disabled:opacity-40 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
           >
             <LogOutIcon className="h-4 w-4" />
-            <span>{todayAttendance?.isCheckedOut ? 'Checked Out' : 'Check Out Now'}</span>
+            <span>{todayAttendance?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
           </button>
         </div>
       </div>
 
-      {/* Dynamic Metric Cards with Exact Filtered Route Navigation */}
+      {/* Dynamic Metric Cards */}
       {role === 'HR' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="blue" subtext="View Directory" />
+            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="blue" subtext="Directory" />
           </div>
           <div onClick={() => navigate('/employees?status=Active')} className="cursor-pointer">
             <StatCard title="Active Staff" value={metrics.activeEmployees || 0} icon={UserCheck} color="emerald" subtext="Active Accounts" />
           </div>
-          <div onClick={() => navigate(`/attendance?date=${todayStr}`)} className="cursor-pointer">
-            <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="indigo" subtext="View Today's Log" />
+          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
+            <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="indigo" subtext="View Attendance" />
           </div>
           <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
             <StatCard title="On Leave Today" value={metrics.onLeaveToday || 0} icon={CalendarDays} color="rose" subtext="Approved Time-Off" />
@@ -259,9 +222,9 @@ const Dashboard = () => {
       {role === 'Manager' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="blue" subtext="View Assigned Team" />
+            <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="blue" subtext="Assigned Team" />
           </div>
-          <div onClick={() => navigate(`/attendance?date=${todayStr}`)} className="cursor-pointer">
+          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
             <StatCard title="Team Present" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="View Team Logs" />
           </div>
           <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
@@ -288,20 +251,20 @@ const Dashboard = () => {
 
       {/* Direct Pending Leave Approvals Desk */}
       {(role === 'Manager' || role === 'HR') && pendingLeaves.length > 0 && (
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-600" />
-              <h3 className="text-lg font-black text-slate-900">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
+              <h3 className="text-base font-extrabold text-slate-900">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
             </div>
-            <button onClick={() => navigate('/leaves?status=Pending')} className="text-xs font-bold text-blue-700 hover:underline">
+            <button onClick={() => navigate('/leaves?status=Pending')} className="text-xs font-bold text-blue-600 hover:underline">
               View All Pending Requests →
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pendingLeaves.map((l) => (
-              <div key={l._id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
+              <div key={l._id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="font-extrabold text-slate-900 text-sm">{l.employeeId?.fullName}</span>
@@ -338,14 +301,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Personnel Quick Access Grid Widget */}
+      {/* Personnel Quick Access */}
       {(role === 'Manager' || role === 'HR') && (
-        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-900">Personnel Quick Access</h3>
+            <h3 className="text-base font-extrabold text-slate-900">Personnel Quick Access</h3>
             <button
               onClick={() => navigate('/employees')}
-              className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
             >
               <span>View Full Directory</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -360,7 +323,7 @@ const Dashboard = () => {
                   setSelectedProfileId(emp._id);
                   setIsProfileModalOpen(true);
                 }}
-                className="rounded-2xl border border-blue-100 bg-sky-50/40 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -377,9 +340,9 @@ const Dashboard = () => {
                   <Badge variant={emp.status} size="xs">{emp.status}</Badge>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60">
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200">
                   <Badge variant={emp.role} size="xs">{emp.role}</Badge>
-                  <span className="text-[10px] font-bold text-blue-700 group-hover:underline">View Deep Profile →</span>
+                  <span className="text-[10px] font-bold text-blue-600 group-hover:underline">View Deep Profile →</span>
                 </div>
               </div>
             ))}

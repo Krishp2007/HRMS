@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
-import { Clock, LogIn, LogOut as LogOutIcon, Calendar, User } from 'lucide-react';
+import { Clock, LogIn, LogOut as LogOutIcon, Calendar } from 'lucide-react';
 
 const AttendancePage = () => {
   const { user } = useAuth();
@@ -15,22 +15,39 @@ const AttendancePage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
 
-  // Date Filter initialized from URL query params if present (e.g. ?date=2026-09-16)
-  const initialDate = searchParams.get('date') || '';
-  const [filterDate, setFilterDate] = useState(initialDate);
+  // Optional date filter initialized from URL search params if present
+  const [filterDate, setFilterDate] = useState(searchParams.get('date') || '');
 
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
+      const role = user?.role;
+      let logsEndpoint = '/attendance/my-history';
+
+      if (role === 'HR') {
+        logsEndpoint = `/attendance/all${filterDate ? `?date=${filterDate}` : ''}`;
+      } else if (role === 'Manager') {
+        logsEndpoint = `/attendance/team${filterDate ? `?date=${filterDate}` : ''}`;
+      } else {
+        logsEndpoint = '/attendance/my-history';
+      }
+
       const [todayRes, logsRes] = await Promise.all([
         api.get('/attendance/today-status'),
-        api.get(`/attendance/history${filterDate ? `?date=${filterDate}` : ''}`),
+        api.get(logsEndpoint),
       ]);
 
       setTodayStatus(todayRes.data);
-      setAttendanceLogs(logsRes.data);
+
+      if (role === 'Manager' && logsRes.data?.records) {
+        setAttendanceLogs(logsRes.data.records);
+      } else if (Array.isArray(logsRes.data)) {
+        setAttendanceLogs(logsRes.data);
+      } else {
+        setAttendanceLogs([]);
+      }
     } catch (err) {
-      console.error('Failed to fetch attendance data:', err);
+      console.error('Failed to fetch attendance logs:', err);
     } finally {
       setLoading(false);
     }
@@ -74,29 +91,26 @@ const AttendancePage = () => {
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Attendance Operations Hub</h2>
-        <p className="text-xs font-semibold text-slate-500">Track shift check-ins, check-outs, and historical log records</p>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Attendance</h2>
+        <p className="text-xs font-semibold text-slate-500">Daily check-in / check-out station and log records</p>
       </div>
 
-      {/* Daily Shift Punch Station Card */}
-      <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm space-y-4">
+      {/* Daily Shift Punch Station */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
-              <Clock className="h-4 w-4" />
-              <span>Today's Shift Action Station ({new Date().toLocaleDateString()})</span>
-            </div>
-            <h3 className="text-xl font-black text-slate-900 mt-1">
+            <span className="text-xs font-bold text-blue-600">Today's Shift ({new Date().toLocaleDateString()})</span>
+            <h3 className="text-lg font-extrabold text-slate-900 mt-1">
               {!todayStatus?.isCheckedIn
-                ? 'Not Checked In Yet Today'
+                ? 'Not Checked In Yet'
                 : !todayStatus?.isCheckedOut
-                ? 'Shift Active (Checked In)'
+                ? 'Shift Active (In Office)'
                 : 'Shift Completed Today'}
             </h3>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {todayStatus?.attendanceRecord?.checkInTime
                 ? `Check-In Recorded: ${new Date(todayStatus.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : 'Mark your arrival to register attendance for today.'}
+                : 'Mark your check-in to register attendance for today.'}
             </p>
             {actionMsg && <p className="text-xs font-bold text-emerald-600 mt-1">{actionMsg}</p>}
           </div>
@@ -113,7 +127,7 @@ const AttendancePage = () => {
             <button
               onClick={handleCheckOut}
               disabled={actionLoading || !todayStatus?.isCheckedIn || todayStatus?.isCheckedOut}
-              className="flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-sky-700 disabled:opacity-40 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
             >
               <LogOutIcon className="h-4 w-4" />
               <span>{todayStatus?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
@@ -122,30 +136,32 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Filter & History Table */}
-      <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm space-y-4">
+      {/* Attendance History Table */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h3 className="text-lg font-black text-slate-900">
-            {role === 'HR' ? 'All Corporate Attendance Logs' : role === 'Manager' ? 'Team Attendance Records' : 'My Shift History'}
+          <h3 className="text-base font-extrabold text-slate-900">
+            {role === 'HR' ? 'All Attendance Logs' : role === 'Manager' ? 'Team Attendance Records' : 'My Shift History'}
           </h3>
 
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="rounded-xl border border-blue-100 bg-sky-50/50 px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-blue-600 focus:outline-none"
-            />
-            {filterDate && (
-              <button
-                onClick={() => setFilterDate('')}
-                className="text-xs font-bold text-rose-600 hover:underline"
-              >
-                Clear Filter
-              </button>
-            )}
-          </div>
+          {(role === 'HR' || role === 'Manager') && (
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-blue-600 focus:outline-none"
+              />
+              {filterDate && (
+                <button
+                  onClick={() => setFilterDate('')}
+                  className="text-xs font-bold text-rose-600 hover:underline"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -153,7 +169,9 @@ const AttendancePage = () => {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : attendanceLogs.length === 0 ? (
-          <p className="text-center py-8 text-xs font-semibold text-slate-500">No attendance logs found for this date query.</p>
+          <div className="text-center py-8 text-xs font-semibold text-slate-500">
+            No attendance logs found.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-700">
@@ -171,7 +189,7 @@ const AttendancePage = () => {
                   <tr key={log._id} className="hover:bg-slate-50 transition-colors">
                     {(role === 'HR' || role === 'Manager') && (
                       <td className="py-3 px-4">
-                        <span className="font-extrabold text-slate-900">{log.employeeId?.fullName}</span>
+                        <span className="font-extrabold text-slate-900">{log.employeeId?.fullName || 'Staff Member'}</span>
                         <p className="text-xs text-slate-500 font-mono">{log.employeeId?.employeeId} • {log.employeeId?.department}</p>
                       </td>
                     )}
@@ -179,7 +197,7 @@ const AttendancePage = () => {
                     <td className="py-3 px-4 font-mono font-bold text-emerald-600 text-xs">
                       {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-sky-600 text-xs">
+                    <td className="py-3 px-4 font-mono font-bold text-blue-600 text-xs">
                       {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Office'}
                     </td>
                     <td className="py-3 px-4">
