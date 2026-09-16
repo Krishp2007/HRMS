@@ -233,7 +233,7 @@ const Dashboard = () => {
           <div onClick={() => navigate('/employees?status=Active')} className="cursor-pointer">
             <StatCard title="Active Staff" value={metrics.activeEmployees || 0} icon={UserCheck} color="emerald" subtext="Active Accounts" />
           </div>
-          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
+          <div onClick={() => navigate('/attendance?filter=present')} className="cursor-pointer">
             <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="indigo" subtext="View Attendance" />
           </div>
           <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
@@ -250,7 +250,7 @@ const Dashboard = () => {
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
             <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="blue" subtext="Assigned Team" />
           </div>
-          <div onClick={() => navigate('/attendance')} className="cursor-pointer">
+          <div onClick={() => navigate('/attendance?filter=present')} className="cursor-pointer">
             <StatCard title="Team Present" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="View Team Logs" />
           </div>
           <div onClick={() => navigate('/leaves?status=Approved')} className="cursor-pointer">
