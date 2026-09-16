@@ -22,12 +22,16 @@ const checkIn = async (req, res) => {
     }
 
     // Edge Case 2: Check if employee is on approved leave today
-    const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
     const approvedLeave = await LeaveRequest.findOne({
       employeeId,
       status: 'Approved',
-      startDate: { $lte: now },
-      endDate: { $gte: now },
+      startDate: { $lte: todayEnd },
+      endDate: { $gte: todayStart },
     });
 
     if (approvedLeave) {

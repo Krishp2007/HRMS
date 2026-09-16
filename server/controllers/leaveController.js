@@ -234,6 +234,36 @@ const rejectLeave = async (req, res) => {
   }
 };
 
+// @desc    Cancel leave request (Only allowed for Pending requests by the owner)
+// @route   DELETE /api/leaves/:id
+// @access  Private (All Roles - Owner only)
+const cancelLeave = async (req, res) => {
+  try {
+    const leave = await LeaveRequest.findById(req.params.id);
+
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    // Ownership check
+    if (leave.employeeId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized. You can only cancel your own leave requests.' });
+    }
+
+    // Edge Case 4: Cannot cancel Approved or Rejected requests
+    if (leave.status !== 'Pending') {
+      return res.status(400).json({
+        message: `Cannot cancel this leave request because it is already ${leave.status.toLowerCase()}. Only Pending requests can be cancelled.`,
+      });
+    }
+
+    await leave.deleteOne();
+    return res.json({ message: 'Leave request cancelled successfully.' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   applyLeave,
   getMyLeaves,
@@ -241,4 +271,5 @@ module.exports = {
   getAllLeaves,
   approveLeave,
   rejectLeave,
+  cancelLeave,
 };
