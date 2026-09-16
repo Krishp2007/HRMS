@@ -20,7 +20,7 @@ const seedData = async () => {
     // 1. HR User
     const hr = await User.create({
       employeeId: 'EMP-1001',
-      fullName: 'Sarah Connor (HR Lead)',
+      fullName: 'Sarah Connor',
       email: 'hr@apptrait.com',
       password: 'password123',
       phone: '9876543210',
@@ -35,7 +35,7 @@ const seedData = async () => {
     // 2. Managers
     const mgrEng = await User.create({
       employeeId: 'EMP-1002',
-      fullName: 'Alex Vance (Eng Manager)',
+      fullName: 'Alex Vance',
       email: 'manager1@apptrait.com',
       password: 'password123',
       phone: '9876543211',
@@ -49,7 +49,7 @@ const seedData = async () => {
 
     const mgrSales = await User.create({
       employeeId: 'EMP-1003',
-      fullName: 'David Miller (Sales Manager)',
+      fullName: 'David Miller',
       email: 'manager2@apptrait.com',
       password: 'password123',
       phone: '9876543212',
@@ -64,7 +64,7 @@ const seedData = async () => {
     // 3. Employees (Engineering Team)
     const emp1 = await User.create({
       employeeId: 'EMP-1004',
-      fullName: 'John Doe (Frontend Dev)',
+      fullName: 'John Doe',
       email: 'employee1@apptrait.com',
       password: 'password123',
       phone: '9876543213',
@@ -78,7 +78,7 @@ const seedData = async () => {
 
     const emp2 = await User.create({
       employeeId: 'EMP-1005',
-      fullName: 'Jane Smith (Backend Dev)',
+      fullName: 'Jane Smith',
       email: 'employee2@apptrait.com',
       password: 'password123',
       phone: '9876543214',
@@ -92,7 +92,7 @@ const seedData = async () => {
 
     const emp3 = await User.create({
       employeeId: 'EMP-1006',
-      fullName: 'Robert Johnson (QA Engineer)',
+      fullName: 'Robert Johnson',
       email: 'employee3@apptrait.com',
       password: 'password123',
       phone: '9876543215',
@@ -107,7 +107,7 @@ const seedData = async () => {
     // 4. Employees (Sales Team)
     const emp4 = await User.create({
       employeeId: 'EMP-1007',
-      fullName: 'Emily Davis (Sales Exec)',
+      fullName: 'Emily Davis',
       email: 'employee4@apptrait.com',
       password: 'password123',
       phone: '9876543216',
@@ -121,7 +121,7 @@ const seedData = async () => {
 
     const emp5 = await User.create({
       employeeId: 'EMP-1008',
-      fullName: 'Michael Brown (Sales Representative)',
+      fullName: 'Michael Brown',
       email: 'employee5@apptrait.com',
       password: 'password123',
       phone: '9876543217',
@@ -136,8 +136,9 @@ const seedData = async () => {
     // 5. Inactive Employee (To test Deactivated User filter & blocks)
     const emp6 = await User.create({
       employeeId: 'EMP-1009',
-      fullName: 'Mark Wilson (Inactive Staff)',
+      fullName: 'Mark Wilson',
       email: 'employee6@apptrait.com',
+
       password: 'password123',
       phone: '9876543218',
       role: 'Employee',
