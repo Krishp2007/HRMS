@@ -2,15 +2,15 @@ import React from 'react';
 
 const Badge = ({ children, variant = 'default', size = 'sm' }) => {
   const sizeClasses = {
-    xs: 'px-2 py-0.5 text-[10px] font-bold',
-    sm: 'px-2.5 py-0.5 text-xs font-bold',
-    md: 'px-3 py-1 text-xs font-bold',
+    xs: 'px-2 py-0.5 text-[10px] font-extrabold',
+    sm: 'px-2.5 py-1 text-xs font-bold',
+    md: 'px-3 py-1.5 text-xs font-bold',
   };
 
   const variantClasses = {
-    // Roles (Light Blue / Sky Blue combo - NO PURPLE)
-    HR: 'bg-blue-100 text-blue-800 border border-blue-200',
-    Manager: 'bg-sky-100 text-sky-800 border border-sky-200',
+    // Roles
+    HR: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+    Manager: 'bg-blue-50 text-blue-700 border border-blue-200',
     Employee: 'bg-slate-100 text-slate-700 border border-slate-200',
 
     // Statuses
@@ -22,13 +22,13 @@ const Badge = ({ children, variant = 'default', size = 'sm' }) => {
     Leave: 'bg-sky-50 text-sky-700 border border-sky-200',
 
     // Leave Types
-    Casual: 'bg-sky-50 text-sky-700 border border-sky-200',
+    Casual: 'bg-blue-50 text-blue-700 border border-blue-200',
     Sick: 'bg-amber-50 text-amber-700 border border-amber-200',
     Paid: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     Unpaid: 'bg-slate-100 text-slate-700 border border-slate-200',
 
-    // Leave Approval Status
-    Pending: 'bg-amber-50 text-amber-700 border border-amber-300 shadow-sm',
+    // Approval Statuses
+    Pending: 'bg-amber-50 text-amber-700 border border-amber-300 font-bold',
     Approved: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     Rejected: 'bg-rose-50 text-rose-700 border border-rose-200',
 
