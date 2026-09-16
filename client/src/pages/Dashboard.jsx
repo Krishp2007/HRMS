@@ -15,11 +15,12 @@ import {
   LogIn,
   LogOut as LogOutIcon,
   ArrowRight,
-  TrendingUp,
   Sparkles,
   Eye,
   CheckCircle,
   XCircle,
+  Briefcase,
+  Building,
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -30,15 +31,15 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Daily Check-In/Out Widget State
+  // Daily Check-In/Out State
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
 
-  // Pending Leave Requests for HR/Manager Direct Approvals on Dashboard
+  // Pending Leave Requests for HR/Manager Direct Approvals
   const [pendingLeaves, setPendingLeaves] = useState([]);
 
-  // Employees List Preview for HR/Manager Dashboard
+  // Employees Grid Preview for Dashboard
   const [previewEmployees, setPreviewEmployees] = useState([]);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -60,14 +61,14 @@ const Dashboard = () => {
           api.get('/employees'),
         ]);
         setPendingLeaves(leavesRes.data);
-        setPreviewEmployees(empsRes.data.slice(0, 5));
+        setPreviewEmployees(empsRes.data.slice(0, 6));
       } else if (user?.role === 'HR') {
         const [leavesRes, empsRes] = await Promise.all([
           api.get('/leaves/all-requests?status=Pending'),
           api.get('/employees'),
         ]);
         setPendingLeaves(leavesRes.data);
-        setPreviewEmployees(empsRes.data.slice(0, 5));
+        setPreviewEmployees(empsRes.data.slice(0, 6));
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load dashboard workspace.');
@@ -133,7 +134,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
       </div>
     );
   }
@@ -143,42 +144,39 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Hero Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-indigo-950 via-purple-950/40 to-slate-950 p-8 shadow-2xl backdrop-blur-2xl">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-purple-500/10 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+      {/* Light Corporate Banner */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <Badge variant={role}>{role} Command Portal</Badge>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              <Badge variant={role}>{role} Operations Desk</Badge>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 Live Workspace
               </span>
             </div>
-            <h2 className="mt-3 text-3xl font-black text-white tracking-tight">
+            <h2 className="mt-3 text-3xl font-black text-slate-900 tracking-tight">
               Welcome back, {user?.fullName}! 👋
             </h2>
-            <p className="mt-1.5 text-sm text-slate-300 max-w-xl">
-              {role === 'HR' && 'Real-time corporate administrative dashboard & employee lifecycle analytics.'}
-              {role === 'Manager' && 'Team operations oversight, direct attendance tracking & leave approval desk.'}
-              {role === 'Employee' && 'Personal daily attendance check-in/out station & time-off management.'}
+            <p className="mt-1.5 text-sm font-medium text-slate-600 max-w-xl">
+              {role === 'HR' && 'Corporate human resources administration & workforce overview.'}
+              {role === 'Manager' && 'Team operations oversight, direct attendance tracking & leave review.'}
+              {role === 'Employee' && 'Personal daily attendance check-in/out station & leave hub.'}
             </p>
           </div>
 
-          {/* Quick Action Buttons */}
+          {/* Quick Action Navigation Buttons */}
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => navigate('/attendance')}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition-all"
             >
               <Clock className="h-4 w-4" />
               <span>Attendance Hub</span>
             </button>
             <button
               onClick={() => navigate('/leaves')}
-              className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-800 transition-all"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
             >
               <CalendarDays className="h-4 w-4" />
               <span>Apply / View Leave</span>
@@ -186,7 +184,7 @@ const Dashboard = () => {
             {(role === 'HR' || role === 'Manager') && (
               <button
                 onClick={() => navigate('/employees')}
-                className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-800 transition-all"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all"
               >
                 <Users className="h-4 w-4" />
                 <span>Directory</span>
@@ -197,32 +195,32 @@ const Dashboard = () => {
       </div>
 
       {/* Interactive Quick Check-In / Out Station */}
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-indigo-400">
+          <div className="flex items-center gap-2 text-xs font-bold text-indigo-600">
             <Clock className="h-4 w-4" />
-            <span>Today's Work Shift Tracker</span>
+            <span>Shift Attendance Tracker</span>
           </div>
-          <h3 className="text-xl font-black text-white mt-1">
+          <h3 className="text-xl font-black text-slate-900 mt-1">
             {!todayAttendance?.isCheckedIn
-              ? 'Ready to start your shift?'
+              ? 'Ready to start your shift today?'
               : !todayAttendance?.isCheckedOut
               ? 'Shift Active • In Office'
               : 'Shift Completed Today! 🎉'}
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
             {todayAttendance?.attendanceRecord?.checkInTime
               ? `Check-In Time: ${new Date(todayAttendance.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
               : 'No check-in recorded yet for today.'}
           </p>
-          {actionMsg && <p className="text-xs font-bold text-emerald-400 mt-1">{actionMsg}</p>}
+          {actionMsg && <p className="text-xs font-bold text-emerald-600 mt-1">{actionMsg}</p>}
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={handleCheckIn}
             disabled={actionLoading || todayAttendance?.isCheckedIn}
-            className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3 text-xs font-bold text-white shadow-xl shadow-emerald-600/25 hover:bg-emerald-500 disabled:opacity-40 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
           >
             <LogIn className="h-4 w-4" />
             <span>{todayAttendance?.isCheckedIn ? 'Checked In' : 'Check In Now'}</span>
@@ -230,7 +228,7 @@ const Dashboard = () => {
           <button
             onClick={handleCheckOut}
             disabled={actionLoading || !todayAttendance?.isCheckedIn || todayAttendance?.isCheckedOut}
-            className="flex items-center gap-2 rounded-2xl bg-purple-600 px-6 py-3 text-xs font-bold text-white shadow-xl shadow-purple-600/25 hover:bg-purple-500 disabled:opacity-40 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-purple-700 disabled:opacity-40 transition-all"
           >
             <LogOutIcon className="h-4 w-4" />
             <span>{todayAttendance?.isCheckedOut ? 'Checked Out' : 'Check Out Now'}</span>
@@ -238,14 +236,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Dynamic KPI Stats Cards */}
+      {/* Dynamic Metric Cards */}
       {role === 'HR' && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="indigo" subtext="Company Directory" />
+            <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="indigo" subtext="Directory" />
           </div>
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
-            <StatCard title="Active Personnel" value={metrics.activeEmployees || 0} icon={UserCheck} color="emerald" subtext="Active Accounts" />
+            <StatCard title="Active Staff" value={metrics.activeEmployees || 0} icon={UserCheck} color="emerald" subtext="Active Accounts" />
           </div>
           <div onClick={() => navigate('/attendance')} className="cursor-pointer">
             <StatCard title="Present Today" value={metrics.presentToday || 0} icon={Clock} color="blue" subtext="In Office" />
@@ -260,25 +258,25 @@ const Dashboard = () => {
       )}
 
       {role === 'Manager' && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
             <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="indigo" subtext="Assigned Team" />
           </div>
           <div onClick={() => navigate('/attendance')} className="cursor-pointer">
-            <StatCard title="Team Present Today" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="Present Shift" />
+            <StatCard title="Team Present" value={metrics.teamPresentToday || 0} icon={UserCheck} color="emerald" subtext="Present Today" />
           </div>
           <div onClick={() => navigate('/leaves')} className="cursor-pointer">
-            <StatCard title="Team On Leave" value={metrics.teamMembersOnLeave || 0} icon={CalendarDays} color="rose" subtext="Time-off Today" />
+            <StatCard title="Team On Leave" value={metrics.teamMembersOnLeave || 0} icon={CalendarDays} color="rose" subtext="Time-Off Today" />
           </div>
           <div onClick={() => navigate('/leaves')} className="cursor-pointer">
-            <StatCard title="Pending Approvals" value={metrics.pendingTeamApprovals || 0} icon={AlertCircle} color="amber" subtext="Awaiting Review" />
+            <StatCard title="Pending Review" value={metrics.pendingTeamApprovals || 0} icon={AlertCircle} color="amber" subtext="Awaiting Action" />
           </div>
         </div>
       )}
 
       {role === 'Employee' && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Today Shift Status" value={metrics.todayStatus || 'Not Checked In'} icon={Clock} color={metrics.todayStatus === 'Completed' ? 'emerald' : metrics.todayStatus === 'Checked In' ? 'blue' : 'amber'} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Shift Status" value={metrics.todayStatus || 'Not Checked In'} icon={Clock} color={metrics.todayStatus === 'Completed' ? 'emerald' : metrics.todayStatus === 'Checked In' ? 'blue' : 'amber'} />
           <StatCard title="Total Applications" value={metrics.totalLeaveRequests || 0} icon={CalendarDays} color="indigo" />
           <StatCard title="Pending Review" value={metrics.pendingRequests || 0} icon={AlertCircle} color="amber" />
           <StatCard title="Approved Leaves" value={metrics.approvedRequests || 0} icon={CheckCircle2} color="emerald" />
@@ -287,45 +285,45 @@ const Dashboard = () => {
 
       {/* Direct Pending Leave Approvals Widget for Manager & HR */}
       {(role === 'Manager' || role === 'HR') && pendingLeaves.length > 0 && (
-        <div className="rounded-3xl border border-amber-500/30 bg-amber-500/5 p-6 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-400" />
-              <h3 className="text-lg font-extrabold text-white">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <h3 className="text-lg font-black text-slate-900">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
             </div>
-            <button onClick={() => navigate('/leaves')} className="text-xs font-bold text-amber-400 hover:underline">
+            <button onClick={() => navigate('/leaves')} className="text-xs font-bold text-indigo-600 hover:underline">
               View All Requests →
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pendingLeaves.map((l) => (
-              <div key={l._id} className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+              <div key={l._id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="font-extrabold text-white text-sm">{l.employeeId?.fullName}</span>
-                    <p className="text-xs text-slate-400">{l.employeeId?.department} • {l.employeeId?.designation}</p>
+                    <span className="font-extrabold text-slate-900 text-sm">{l.employeeId?.fullName}</span>
+                    <p className="text-xs text-slate-500">{l.employeeId?.department} • {l.employeeId?.designation}</p>
                   </div>
                   <Badge variant={l.leaveType}>{l.leaveType}</Badge>
                 </div>
 
-                <div className="text-xs text-slate-300">
-                  <span className="font-semibold text-indigo-400">Duration: </span>
+                <div className="text-xs text-slate-700">
+                  <span className="font-semibold text-indigo-600">Duration: </span>
                   {new Date(l.startDate).toLocaleDateString()} to {new Date(l.endDate).toLocaleDateString()} ({l.totalDays} Days)
-                  <p className="text-slate-400 mt-1 italic">"{l.reason}"</p>
+                  <p className="text-slate-500 mt-1 italic">"{l.reason}"</p>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
                     onClick={() => handleApproveLeave(l._id)}
-                    className="flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition-all shadow-md"
+                    className="flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-all shadow-sm"
                   >
                     <CheckCircle className="h-3.5 w-3.5" />
                     <span>Approve</span>
                   </button>
                   <button
                     onClick={() => handleRejectLeave(l._id)}
-                    className="flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-500 transition-all shadow-md"
+                    className="flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-700 transition-all shadow-sm"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     <span>Reject</span>
@@ -337,60 +335,69 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Directory Quick Preview Widget for Manager & HR */}
+      {/* Personnel Quick Access Grid Widget */}
       {(role === 'Manager' || role === 'HR') && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-extrabold text-white">Personnel Quick Access</h3>
+            <h3 className="text-lg font-black text-slate-900">Personnel Quick Access</h3>
             <button
               onClick={() => navigate('/employees')}
-              className="flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
             >
               <span>View Full Directory</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
-                <tr>
-                  <th className="py-3 px-4">Employee</th>
-                  <th className="py-3 px-4">Role / Dept</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Deep Profile</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {previewEmployees.map((emp) => (
-                  <tr key={emp._id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3 px-4">
-                      <span className="font-semibold text-white">{emp.fullName}</span>
-                      <p className="text-xs text-slate-400">{emp.employeeId} • {emp.designation}</p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-xs font-semibold text-slate-200">{emp.department}</span>
-                      <p className="text-[10px] text-slate-400">{emp.role}</p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={emp.status}>{emp.status}</Badge>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedProfileId(emp._id);
-                          setIsProfileModalOpen(true);
-                        }}
-                        className="flex items-center gap-1 rounded-xl bg-slate-800 px-3 py-1.5 text-xs font-bold text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all ml-auto"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span>View Profile</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {previewEmployees.map((emp) => (
+              <div
+                key={emp._id}
+                onClick={() => {
+                  setSelectedProfileId(emp._id);
+                  setIsProfileModalOpen(true);
+                }}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-black text-xs">
+                      {emp.fullName.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors text-sm">
+                        {emp.fullName}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-mono">{emp.employeeId}</p>
+                    </div>
+                  </div>
+                  <Badge variant={emp.status} size="xs">{emp.status}</Badge>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1 border-t border-slate-200/60 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{emp.designation}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Building className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{emp.department} • <Badge variant={emp.role} size="xs">{emp.role}</Badge></span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedProfileId(emp._id);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-white border border-slate-200 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Deep Profile</span>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
