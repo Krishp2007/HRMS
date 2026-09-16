@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
+import Select from '../components/Select';
 import {
   Clock,
   LogIn,
@@ -159,11 +160,6 @@ const AttendancePage = () => {
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-
   const handlePrevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
   };
@@ -197,7 +193,6 @@ const AttendancePage = () => {
     return leaveRecords.find((l) => {
       const start = new Date(l.startDate);
       const end = new Date(l.endDate);
-      // Strip hours for date-only comparison
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       return checkDate >= start && checkDate <= end;
@@ -214,7 +209,6 @@ const AttendancePage = () => {
     const dayOfWeek = dateObj.getDay();
 
     if (dayOfWeek !== 0) {
-      // Non-Sunday working day
       workingDaysCount++;
     }
 
@@ -229,24 +223,34 @@ const AttendancePage = () => {
     }
   }
 
+  // Employee selector options for custom Select on mobile
+  const employeeOptions = employeesList.map((emp) => ({
+    label: `${emp.fullName} (${emp.employeeId})`,
+    value: emp._id,
+  }));
+
+  // Short day labels for mobile
+  const dayLabelsFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayLabelsShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Title */}
       <div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Individual Attendance Calendar</h2>
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Attendance Calendar</h2>
         <p className="text-xs font-bold text-slate-700">
           {role === 'HR' || role === 'Manager'
-            ? 'Select an employee to view their complete monthly attendance calendar record'
+            ? 'Select an employee to view their monthly attendance record'
             : 'View your monthly shift check-in calendar and attendance logs'}
         </p>
       </div>
 
       {/* Daily Shift Punch Station */}
-      <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+      <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
             <span className="text-xs font-black text-blue-700">Daily Punch Station ({new Date().toLocaleDateString()})</span>
-            <h3 className="text-xl font-black text-slate-900 mt-0.5">
+            <h3 className="text-base sm:text-xl font-black text-slate-900 mt-0.5">
               {!todayStatus?.isCheckedIn
                 ? 'Not Checked In Yet'
                 : !todayStatus?.isCheckedOut
@@ -255,28 +259,30 @@ const AttendancePage = () => {
             </h3>
             <p className="text-xs text-slate-700 font-bold mt-0.5">
               {todayStatus?.attendanceRecord?.checkInTime
-                ? `Check-In Recorded: ${new Date(todayStatus.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                ? `Check-In: ${new Date(todayStatus.attendanceRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                 : 'Register your check-in time for today.'}
             </p>
             {actionMsg && <p className="text-xs font-black text-emerald-700 mt-1">{actionMsg}</p>}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={handleCheckIn}
               disabled={actionLoading || todayStatus?.isCheckedIn}
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-emerald-600 px-3 sm:px-5 py-2 sm:py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
             >
               <LogIn className="h-4 w-4" />
-              <span>{todayStatus?.isCheckedIn ? 'Checked In' : 'Check In'}</span>
+              <span className="hidden sm:inline">{todayStatus?.isCheckedIn ? 'Checked In' : 'Check In'}</span>
+              <span className="sm:hidden">In</span>
             </button>
             <button
               onClick={handleCheckOut}
               disabled={actionLoading || !todayStatus?.isCheckedIn || todayStatus?.isCheckedOut}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-3 sm:px-5 py-2 sm:py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
             >
               <LogOutIcon className="h-4 w-4" />
-              <span>{todayStatus?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
+              <span className="hidden sm:inline">{todayStatus?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
+              <span className="sm:hidden">Out</span>
             </button>
           </div>
         </div>
@@ -284,15 +290,27 @@ const AttendancePage = () => {
 
       {/* Employee Selector Bar (HR & Manager Only) */}
       {(role === 'HR' || role === 'Manager') && (
-        <div className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-              Select Employee to View Individual Calendar ({employeesList.length} Staff)
-            </span>
+        <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-800 block">
+            Select Employee ({employeesList.length} Staff)
+          </span>
+
+          {/* Mobile: Custom Select Dropdown */}
+          <div className="sm:hidden">
+            <Select
+              options={employeeOptions}
+              value={selectedEmployeeId}
+              onChange={(val) => {
+                const emp = employeesList.find((e) => e._id === val);
+                if (emp) handleEmployeeSelect(emp);
+              }}
+              placeholder="Choose employee..."
+              icon={User}
+            />
           </div>
 
-          {/* Quick Select Employee Chips */}
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+          {/* Desktop: Horizontal Chip Selector */}
+          <div className="hidden sm:flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
             {employeesList.map((emp) => {
               const isSelected = emp._id === selectedEmployeeId;
               return (
@@ -323,105 +341,106 @@ const AttendancePage = () => {
         </div>
       )}
 
-      {/* Monthly Summary Stat Cards Grid above Calendar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Month Total Days</p>
-              <h4 className="text-xl font-black text-slate-900 mt-1">{daysInMonth} Days</h4>
+      {/* Monthly Summary Stat Cards Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-blue-200 bg-white p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Total Days</p>
+              <h4 className="text-lg sm:text-xl font-black text-slate-900 mt-1">{daysInMonth}</h4>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
-              <CalendarIcon className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Working Days</p>
-              <h4 className="text-xl font-black text-indigo-950 mt-1">{workingDaysCount} Days</h4>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800">
-              <Briefcase className="h-5 w-5" />
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shrink-0">
+              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Present Days</p>
-              <h4 className="text-xl font-black text-emerald-950 mt-1">{presentDaysCount} Days</h4>
+        <div className="rounded-2xl border border-indigo-200 bg-white p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Working</p>
+              <h4 className="text-lg sm:text-xl font-black text-indigo-950 mt-1">{workingDaysCount}</h4>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
-              <CheckCircle2 className="h-5 w-5" />
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800 shrink-0">
+              <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Approved Leaves</p>
-              <h4 className="text-xl font-black text-amber-950 mt-1">{approvedLeaveDaysCount} Days</h4>
+        <div className="rounded-2xl border border-emerald-200 bg-white p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Present</p>
+              <h4 className="text-lg sm:text-xl font-black text-emerald-950 mt-1">{presentDaysCount}</h4>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-              <Umbrella className="h-5 w-5" />
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shrink-0">
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-200 bg-white p-3 sm:p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Leaves</p>
+              <h4 className="text-lg sm:text-xl font-black text-amber-950 mt-1">{approvedLeaveDaysCount}</h4>
+            </div>
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shrink-0">
+              <Umbrella className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Individual Employee Calendar Card */}
-      <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm space-y-6">
+      <div className="rounded-2xl border border-blue-200 bg-white p-3 sm:p-6 shadow-sm space-y-4 sm:space-y-6">
         {/* Selected Employee Calendar Header with Month/Year Picker */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-lg shadow-sm">
+        <div className="flex flex-col gap-3 sm:gap-4 border-b border-slate-200 pb-3 sm:pb-4">
+          {/* Employee Info Row */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-base sm:text-lg shadow-sm shrink-0">
               {selectedEmployee?.fullName?.charAt(0) || user?.fullName?.charAt(0)}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-black text-slate-900">
-                  {selectedEmployee?.fullName || user?.fullName}'s Attendance Calendar
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h3 className="text-sm sm:text-lg font-black text-slate-900 truncate">
+                  {selectedEmployee?.fullName || user?.fullName}
                 </h3>
                 <Badge variant={selectedEmployee?.role || user?.role} size="xs">
                   {selectedEmployee?.role || user?.role}
                 </Badge>
               </div>
-              <p className="text-xs text-slate-700 font-extrabold">
-                {selectedEmployee?.employeeId || user?.employeeId} • {selectedEmployee?.department || user?.department} ({selectedEmployee?.designation || user?.designation})
+              <p className="text-[10px] sm:text-xs text-slate-700 font-extrabold truncate">
+                {selectedEmployee?.employeeId || user?.employeeId} • {selectedEmployee?.department || user?.department}
               </p>
             </div>
           </div>
 
-          {/* Direct Month & Year Picker + Prev/Next Controls */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-sky-50 border border-blue-200 rounded-xl px-3 py-1.5">
-              <CalendarIcon className="h-4 w-4 text-blue-600" />
+          {/* Month/Year Picker + Prev/Next Controls */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 bg-sky-50 border border-blue-200 rounded-xl px-2.5 sm:px-3 py-1.5">
+              <CalendarIcon className="h-4 w-4 text-blue-600 shrink-0" />
               <input
                 type="month"
                 value={monthInputValue}
                 onChange={(e) => handleMonthPickerChange(e.target.value)}
-                className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer w-[130px]"
               />
             </div>
 
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-800 hover:bg-blue-100 transition-all"
+                className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-800 hover:bg-blue-100 transition-all"
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>Prev</span>
+                <span className="hidden sm:inline">Prev</span>
               </button>
               <button
                 onClick={handleNextMonth}
-                className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-800 hover:bg-blue-100 transition-all"
+                className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-800 hover:bg-blue-100 transition-all"
               >
-                <span>Next</span>
+                <span className="hidden sm:inline">Next</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -429,26 +448,29 @@ const AttendancePage = () => {
         </div>
 
         {/* Days of Week Header */}
-        <div className="grid grid-cols-7 gap-2 text-center text-xs font-black uppercase tracking-wider text-slate-700">
-          <div className="text-sky-700">Sun (Off)</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700">
+          <div className="text-sky-700">
+            <span className="hidden sm:inline">Sun (Off)</span>
+            <span className="sm:hidden">S</span>
+          </div>
+          {dayLabelsFull.slice(1).map((label, i) => (
+            <div key={label + i}>
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{dayLabelsShort[i + 1]}</span>
+            </div>
+          ))}
         </div>
 
         {/* Individual Calendar Month Day Cells */}
         {loading ? (
-          <div className="flex h-64 items-center justify-center">
+          <div className="flex h-40 sm:h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2.5">
             {/* Empty Slots before 1st of month */}
             {Array.from({ length: firstDayOfMonth }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="h-28 rounded-2xl bg-sky-50/40 border border-slate-200" />
+              <div key={`empty-${idx}`} className="aspect-square sm:h-28 rounded-xl sm:rounded-2xl bg-sky-50/40 border border-slate-200" />
             ))}
 
             {/* Day Cells 1-31 */}
@@ -468,9 +490,9 @@ const AttendancePage = () => {
               return (
                 <div
                   key={`day-${dayNum}`}
-                  className={`h-28 rounded-2xl border p-2.5 flex flex-col justify-between transition-all ${
+                  className={`aspect-square sm:h-28 rounded-xl sm:rounded-2xl border p-1 sm:p-2.5 flex flex-col justify-between transition-all overflow-hidden ${
                     isToday
-                      ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/20'
+                      ? 'border-blue-600 bg-blue-50/50 ring-1 sm:ring-2 ring-blue-500/20'
                       : approvedLeave
                       ? 'border-amber-300 bg-amber-50/60'
                       : log
@@ -481,52 +503,71 @@ const AttendancePage = () => {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-black ${isToday ? 'text-blue-800' : isSunday ? 'text-sky-800' : 'text-slate-900'}`}>
+                    <span className={`text-[10px] sm:text-xs font-black ${isToday ? 'text-blue-800' : isSunday ? 'text-sky-800' : 'text-slate-900'}`}>
                       {dayNum}
                     </span>
                     {isToday && (
-                      <span className="text-[9px] font-black text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded-full border border-blue-200">
+                      <span className="hidden sm:inline text-[9px] font-black text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded-full border border-blue-200">
                         Today
                       </span>
                     )}
                   </div>
 
                   {/* Day Shift Log / Approved Leave / Sunday Holiday Indicator */}
-                  <div className="mt-1 flex-1 flex flex-col justify-center">
+                  <div className="mt-0.5 sm:mt-1 flex-1 flex flex-col justify-center min-w-0">
                     {approvedLeave ? (
-                      <div className="rounded-xl bg-amber-100 border border-amber-300 p-1.5 space-y-0.5 shadow-sm">
-                        <div className="flex items-center justify-between text-[10px] font-black text-amber-950">
-                          <span>Approved Leave</span>
-                          <Umbrella className="h-3 w-3 text-amber-700" />
+                      <>
+                        {/* Mobile: small dot */}
+                        <div className="sm:hidden flex justify-center">
+                          <div className="h-2 w-2 rounded-full bg-amber-500" title="Approved Leave" />
                         </div>
-                        <div className="text-[9px] font-bold text-amber-900">
-                          {approvedLeave.leaveType} Leave
+                        {/* Desktop: full card */}
+                        <div className="hidden sm:block rounded-xl bg-amber-100 border border-amber-300 p-1.5 space-y-0.5 shadow-sm">
+                          <div className="flex items-center justify-between text-[10px] font-black text-amber-950">
+                            <span>Leave</span>
+                            <Umbrella className="h-3 w-3 text-amber-700" />
+                          </div>
+                          <div className="text-[9px] font-bold text-amber-900">
+                            {approvedLeave.leaveType}
+                          </div>
                         </div>
-                      </div>
+                      </>
                     ) : log ? (
-                      <div className="rounded-xl bg-emerald-100/80 border border-emerald-300 p-1.5 space-y-1 shadow-sm">
-                        <div className="flex items-center justify-between text-[10px] font-black text-emerald-950">
-                          <span>{log.status}</span>
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                      <>
+                        {/* Mobile: small dot */}
+                        <div className="sm:hidden flex justify-center">
+                          <div className="h-2 w-2 rounded-full bg-emerald-500" title="Present" />
                         </div>
-                        <div className="text-[9px] font-mono text-emerald-950 font-black space-y-0.5">
-                          <div>
-                            In: {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                        {/* Desktop: full card */}
+                        <div className="hidden sm:block rounded-xl bg-emerald-100/80 border border-emerald-300 p-1.5 space-y-1 shadow-sm">
+                          <div className="flex items-center justify-between text-[10px] font-black text-emerald-950">
+                            <span>{log.status}</span>
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
                           </div>
-                          <div>
-                            Out: {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Office'}
+                          <div className="text-[9px] font-mono text-emerald-950 font-black space-y-0.5">
+                            <div>
+                              In: {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                            </div>
+                            <div>
+                              Out: {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active'}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </>
                     ) : isSunday ? (
-                      <div className="rounded-xl bg-sky-100/70 border border-sky-200 p-1.5 text-center shadow-sm">
-                        <div className="flex items-center justify-center gap-1 text-[10px] font-black text-sky-950">
-                          <Sun className="h-3 w-3 text-sky-600" />
-                          <span>Weekly Off</span>
+                      <>
+                        <div className="sm:hidden flex justify-center">
+                          <div className="h-2 w-2 rounded-full bg-sky-400" title="Weekly Off" />
                         </div>
-                      </div>
+                        <div className="hidden sm:block rounded-xl bg-sky-100/70 border border-sky-200 p-1.5 text-center shadow-sm">
+                          <div className="flex items-center justify-center gap-1 text-[10px] font-black text-sky-950">
+                            <Sun className="h-3 w-3 text-sky-600" />
+                            <span>Off</span>
+                          </div>
+                        </div>
+                      </>
                     ) : (
-                      <div className="text-[10px] text-slate-500 font-bold italic text-center">No Shift</div>
+                      <div className="hidden sm:block text-[10px] text-slate-500 font-bold italic text-center">No Shift</div>
                     )}
                   </div>
                 </div>
@@ -534,6 +575,22 @@ const AttendancePage = () => {
             })}
           </div>
         )}
+
+        {/* Mobile Calendar Legend */}
+        <div className="flex sm:hidden flex-wrap items-center justify-center gap-3 pt-2 border-t border-slate-200 text-[10px] font-bold text-slate-700">
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Present</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-amber-500" />
+            <span>Leave</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-sky-400" />
+            <span>Weekly Off</span>
+          </div>
+        </div>
       </div>
     </div>
   );

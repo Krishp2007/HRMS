@@ -189,10 +189,10 @@ const LeaveManagementPage = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Leave Requests</h2>
-          <p className="text-xs font-bold text-slate-700">Apply for time-off, track application progress, and manage team leave approvals</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Leave Requests</h2>
+          <p className="text-xs font-bold text-slate-700">Apply for time-off, track progress, and manage leave approvals</p>
         </div>
 
         <button
@@ -235,11 +235,11 @@ const LeaveManagementPage = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {paginatedLeaves.map((leave) => (
               <div
                 key={leave._id}
-                className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
@@ -317,10 +317,10 @@ const LeaveManagementPage = () => {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Previous</span>
+                  <span className="hidden sm:inline">Previous</span>
                 </button>
 
                 <div className="text-xs font-black text-slate-900 px-2">
@@ -330,9 +330,9 @@ const LeaveManagementPage = () => {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
                 >
-                  <span>Next</span>
+                  <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
@@ -376,7 +376,7 @@ const LeaveManagementPage = () => {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-2">
             <button
               onClick={() => setIsRejectConfirmOpen(false)}
               className="rounded-xl border border-blue-200 bg-sky-50 px-4 py-2.5 font-black text-slate-800 hover:bg-blue-100"
@@ -418,7 +418,7 @@ const LeaveManagementPage = () => {
           />
 
           {/* Date Range Inputs */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-900 font-black mb-1">Start Date *</label>
               <div className="relative">

@@ -229,10 +229,10 @@ const EmployeesList = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Employees Directory</h2>
-          <p className="text-xs font-bold text-slate-700">Manage corporate staff, role assignments, and deep employee profiles</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Employees Directory</h2>
+          <p className="text-xs font-bold text-slate-700">Manage staff, roles, and employee profiles</p>
         </div>
 
         {role === 'HR' && (
@@ -307,11 +307,11 @@ const EmployeesList = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {paginatedEmployees.map((emp) => (
               <div
                 key={emp._id}
-                className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -339,10 +339,11 @@ const EmployeesList = () => {
                       setSelectedProfileId(emp._id);
                       setIsProfileModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-black text-blue-900 hover:bg-blue-100 transition-all"
+                    className="flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 px-2.5 sm:px-3 py-1.5 text-xs font-black text-blue-900 hover:bg-blue-100 transition-all"
                   >
                     <Eye className="h-3.5 w-3.5 text-blue-700" />
-                    <span>View Deep Profile</span>
+                    <span className="hidden sm:inline">View Deep Profile</span>
+                    <span className="sm:hidden">Profile</span>
                   </button>
 
                   {role === 'HR' && (
@@ -383,10 +384,10 @@ const EmployeesList = () => {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Previous</span>
+                  <span className="hidden sm:inline">Previous</span>
                 </button>
 
                 <div className="text-xs font-black text-slate-900 px-2">
@@ -396,9 +397,9 @@ const EmployeesList = () => {
                 <button
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1 rounded-xl border border-blue-200 bg-sky-50 px-2.5 sm:px-3 py-1.5 text-xs font-black text-slate-900 hover:bg-blue-100 disabled:opacity-40 transition-all"
                 >
-                  <span>Next</span>
+                  <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
@@ -452,7 +453,7 @@ const EmployeesList = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-900 font-black mb-1">Corporate Email *</label>
               <input
@@ -490,7 +491,7 @@ const EmployeesList = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="Assigned Role *"
               options={formRoleOptions}
@@ -505,7 +506,7 @@ const EmployeesList = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-900 font-black mb-1">Designation</label>
               <input

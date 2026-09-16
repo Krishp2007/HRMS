@@ -167,12 +167,12 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Clean Header Banner */}
-      <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                Welcome back, {user?.fullName}! 👋
+      <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Welcome, {user?.fullName}! 👋
               </h2>
               <Badge variant={role}>{role}</Badge>
             </div>
@@ -186,10 +186,10 @@ const Dashboard = () => {
       </div>
 
       {/* Shift Check-In / Check-Out Station */}
-      <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
           <span className="text-xs font-black text-blue-700">Daily Attendance Station</span>
-          <h3 className="text-lg font-black text-slate-900 mt-0.5">
+          <h3 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
             {!todayAttendance?.isCheckedIn
               ? 'Ready to start your shift today?'
               : !todayAttendance?.isCheckedOut
@@ -204,11 +204,11 @@ const Dashboard = () => {
           {actionMsg && <p className="text-xs font-black text-emerald-700 mt-1">{actionMsg}</p>}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={handleCheckIn}
             disabled={actionLoading || todayAttendance?.isCheckedIn}
-            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-emerald-600 px-3 sm:px-5 py-2 sm:py-2.5 text-xs font-black text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 transition-all"
           >
             <LogIn className="h-4 w-4" />
             <span>{todayAttendance?.isCheckedIn ? 'Checked In' : 'Check In'}</span>
@@ -216,7 +216,7 @@ const Dashboard = () => {
           <button
             onClick={handleCheckOut}
             disabled={actionLoading || !todayAttendance?.isCheckedIn || todayAttendance?.isCheckedOut}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-blue-600 px-3 sm:px-5 py-2 sm:py-2.5 text-xs font-black text-white shadow-sm hover:bg-blue-700 disabled:opacity-40 transition-all"
           >
             <LogOutIcon className="h-4 w-4" />
             <span>{todayAttendance?.isCheckedOut ? 'Checked Out' : 'Check Out'}</span>
@@ -226,7 +226,7 @@ const Dashboard = () => {
 
       {/* Dynamic Metric Cards */}
       {role === 'HR' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
             <StatCard title="Total Staff" value={metrics.totalEmployees || 0} icon={Users} color="blue" subtext="Directory" />
           </div>
@@ -246,7 +246,7 @@ const Dashboard = () => {
       )}
 
       {role === 'Manager' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <div onClick={() => navigate('/employees')} className="cursor-pointer">
             <StatCard title="Team Members" value={metrics.totalTeamMembers || 0} icon={Users} color="blue" subtext="Assigned Team" />
           </div>
@@ -263,7 +263,7 @@ const Dashboard = () => {
       )}
 
       {role === 'Employee' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatCard title="Shift Status" value={metrics.todayStatus || 'Not Checked In'} icon={Clock} color={metrics.todayStatus === 'Completed' ? 'emerald' : metrics.todayStatus === 'Checked In' ? 'blue' : 'amber'} />
           <div onClick={() => navigate('/leaves')} className="cursor-pointer">
             <StatCard title="Total Leave Applications" value={metrics.totalLeaveRequests || 0} icon={CalendarDays} color="indigo" subtext="All Time Requests" />
@@ -279,14 +279,14 @@ const Dashboard = () => {
 
       {/* Direct Pending Leave Approvals Desk */}
       {(role === 'Manager' || role === 'HR') && pendingLeaves.length > 0 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-              <h3 className="text-base font-black text-slate-900">Pending Leave Approvals Desk ({pendingLeaves.length})</h3>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+              <h3 className="text-sm sm:text-base font-black text-slate-900 truncate">Pending Approvals ({pendingLeaves.length})</h3>
             </div>
-            <button onClick={() => navigate('/leaves?status=Pending')} className="text-xs font-black text-blue-700 hover:underline">
-              View All Pending Requests →
+            <button onClick={() => navigate('/leaves?status=Pending')} className="text-xs font-black text-blue-700 hover:underline shrink-0">
+              View All →
             </button>
           </div>
 
@@ -331,7 +331,7 @@ const Dashboard = () => {
 
       {/* Personnel Quick Access */}
       {(role === 'Manager' || role === 'HR') && (
-        <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-black text-slate-900">Personnel Quick Access</h3>
             <button

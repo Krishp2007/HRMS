@@ -33,17 +33,17 @@ const StatCard = ({ title, value, icon: Icon, color = 'blue', subtext }) => {
 
   return (
     <div
-      className={`rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all ${currentVariant.card}`}
+      className={`rounded-2xl border p-3 sm:p-5 shadow-sm hover:shadow-md transition-all ${currentVariant.card}`}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-wider text-slate-700">{title}</p>
-          <h3 className={`mt-1.5 text-2xl font-black ${currentVariant.text}`}>{value}</h3>
-          {subtext && <p className="mt-1 text-xs font-black text-slate-600">{subtext}</p>}
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-700 truncate">{title}</p>
+          <h3 className={`mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black truncate ${currentVariant.text}`}>{value}</h3>
+          {subtext && <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-black text-slate-600 truncate">{subtext}</p>}
         </div>
         {Icon && (
-          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${currentVariant.iconBg} shadow-sm`}>
-            <Icon className="h-6 w-6" />
+          <div className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${currentVariant.iconBg} shadow-sm shrink-0`}>
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
           </div>
         )}
       </div>

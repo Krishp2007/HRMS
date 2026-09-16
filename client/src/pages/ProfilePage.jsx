@@ -119,11 +119,11 @@ const ProfilePage = () => {
   const attendanceCount = profileData?.attendance?.length || 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Account Profile & Security</h2>
-        <p className="text-xs font-semibold text-slate-500">View personal employment details, manager hierarchy, and manage security credentials</p>
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Account Profile & Security</h2>
+        <p className="text-xs font-semibold text-slate-500">View personal employment details and manage security credentials</p>
       </div>
 
       {message && (
@@ -141,26 +141,26 @@ const ProfilePage = () => {
       )}
 
       {/* Main Profile Identity Card */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-100 pb-6">
-          <div className="flex items-center gap-5">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-600 text-white font-black text-3xl shadow-md">
+      <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-8 shadow-sm space-y-5 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 border-b border-slate-100 pb-4 sm:pb-6">
+          <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+            <div className="flex h-14 w-14 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-indigo-600 text-white font-black text-xl sm:text-3xl shadow-md shrink-0">
               {fullUser?.fullName?.charAt(0)}
             </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h3 className="text-2xl font-black text-slate-900">{fullUser?.fullName}</h3>
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-2xl font-black text-slate-900 truncate">{fullUser?.fullName}</h3>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
                 <Badge variant={fullUser?.role}>{fullUser?.role}</Badge>
                 <Badge variant={fullUser?.status}>{fullUser?.status}</Badge>
               </div>
-              <p className="mt-1 font-mono text-indigo-600 font-bold text-sm">{fullUser?.employeeId}</p>
-              <p className="text-xs font-semibold text-slate-600 mt-0.5">{fullUser?.designation} • {fullUser?.department} Department</p>
+              <p className="mt-1 font-mono text-indigo-600 font-bold text-xs sm:text-sm">{fullUser?.employeeId}</p>
+              <p className="text-xs font-semibold text-slate-600 mt-0.5 truncate">{fullUser?.designation} • {fullUser?.department}</p>
             </div>
           </div>
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <span className="text-slate-500 font-bold block mb-1">Email Address</span>
             <div className="flex items-center gap-2 text-slate-900 font-extrabold">

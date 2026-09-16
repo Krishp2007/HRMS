@@ -49,60 +49,60 @@ const EmployeeProfileModal = ({ isOpen, onClose, employeeId, onEdit, onToggleSta
   const leaves = profileData?.leaves || [];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Employee Deep Profile & Activity View">
+    <Modal isOpen={isOpen} onClose={onClose} title="Employee Deep Profile">
       {loading ? (
         <div className="flex h-64 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
         </div>
       ) : user ? (
-        <div className="space-y-6 text-xs">
+        <div className="space-y-4 sm:space-y-6 text-xs">
           {/* Header Card */}
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white font-extrabold text-xl shadow-md">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white font-extrabold text-lg sm:text-xl shadow-md shrink-0">
               {user.fullName?.charAt(0)}
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h4 className="text-lg font-extrabold text-slate-900">{user.fullName}</h4>
-                <Badge variant={user.role}>{user.role}</Badge>
-                <Badge variant={user.status}>{user.status}</Badge>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-base sm:text-lg font-extrabold text-slate-900 truncate">{user.fullName}</h4>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                <Badge variant={user.role} size="xs">{user.role}</Badge>
+                <Badge variant={user.status} size="xs">{user.status}</Badge>
               </div>
-              <p className="mt-0.5 font-mono text-indigo-600 font-bold">{user.employeeId}</p>
-              <p className="text-slate-600 mt-0.5 font-medium">{user.designation} • {user.department}</p>
+              <p className="mt-0.5 font-mono text-indigo-600 font-bold text-xs truncate">{user.employeeId}</p>
+              <p className="text-slate-600 mt-0.5 font-medium truncate">{user.designation} • {user.department}</p>
             </div>
           </div>
 
-          {/* Tab Selection */}
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+          {/* Tab Selection — scroll horizontally on small screens */}
+          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-thin">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap text-xs ${
                 activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              Overview Details
+              Overview
             </button>
             <button
               onClick={() => setActiveTab('attendance')}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap text-xs ${
                 activeTab === 'attendance' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              Attendance Logs ({attendance.length})
+              Attendance ({attendance.length})
             </button>
             <button
               onClick={() => setActiveTab('leaves')}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap text-xs ${
                 activeTab === 'leaves' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              Leave Requests ({leaves.length})
+              Leaves ({leaves.length})
             </button>
           </div>
 
           {/* Overview Tab Content */}
           {activeTab === 'overview' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <span className="text-slate-500 font-bold block mb-1">Email Address</span>
                 <p className="text-slate-900 font-semibold truncate">{user.email}</p>
@@ -115,7 +115,7 @@ const EmployeeProfileModal = ({ isOpen, onClose, employeeId, onEdit, onToggleSta
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <span className="text-slate-500 font-bold block mb-1">Assigned Manager</span>
-                <p className="text-slate-900 font-semibold">
+                <p className="text-slate-900 font-semibold truncate">
                   {user.managerId ? `${user.managerId.fullName} (${user.managerId.employeeId})` : 'Root Admin (HR)'}
                 </p>
               </div>
@@ -129,79 +129,57 @@ const EmployeeProfileModal = ({ isOpen, onClose, employeeId, onEdit, onToggleSta
             </div>
           )}
 
-          {/* Attendance Tab Content */}
+          {/* Attendance Tab Content — card-based on mobile */}
           {activeTab === 'attendance' && (
             <div className="max-h-60 overflow-y-auto space-y-2">
               {attendance.length === 0 ? (
-                <p className="text-center py-6 text-slate-500 font-medium">No attendance logs logged yet for this employee.</p>
+                <p className="text-center py-6 text-slate-500 font-medium">No attendance logs logged yet.</p>
               ) : (
-                <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="border-b border-slate-200 uppercase text-[10px] text-slate-400 font-bold">
-                    <tr>
-                      <th className="py-2 px-2">Date</th>
-                      <th className="py-2 px-2">Check In</th>
-                      <th className="py-2 px-2">Check Out</th>
-                      <th className="py-2 px-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {attendance.map((rec) => (
-                      <tr key={rec._id}>
-                        <td className="py-2 px-2 font-semibold text-slate-900">{rec.date}</td>
-                        <td className="py-2 px-2 font-mono text-emerald-600 font-bold">
-                          {rec.checkInTime ? new Date(rec.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                        </td>
-                        <td className="py-2 px-2 font-mono text-purple-600 font-bold">
-                          {rec.checkOutTime ? new Date(rec.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Still checked in'}
-                        </td>
-                        <td className="py-2 px-2">
-                          <Badge variant={rec.status} size="xs">{rec.status}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="space-y-2">
+                  {attendance.map((rec) => (
+                    <div key={rec._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 text-xs">{rec.date}</p>
+                        <p className="text-[10px] font-mono text-slate-600 mt-0.5">
+                          In: {rec.checkInTime ? new Date(rec.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          {' • '}
+                          Out: {rec.checkOutTime ? new Date(rec.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active'}
+                        </p>
+                      </div>
+                      <Badge variant={rec.status} size="xs">{rec.status}</Badge>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
 
-          {/* Leaves Tab Content */}
+          {/* Leaves Tab Content — card-based on mobile */}
           {activeTab === 'leaves' && (
             <div className="max-h-60 overflow-y-auto space-y-2">
               {leaves.length === 0 ? (
-                <p className="text-center py-6 text-slate-500 font-medium">No leave requests submitted yet for this employee.</p>
+                <p className="text-center py-6 text-slate-500 font-medium">No leave requests submitted yet.</p>
               ) : (
-                <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="border-b border-slate-200 uppercase text-[10px] text-slate-400 font-bold">
-                    <tr>
-                      <th className="py-2 px-2">Type</th>
-                      <th className="py-2 px-2">Dates</th>
-                      <th className="py-2 px-2">Days</th>
-                      <th className="py-2 px-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {leaves.map((l) => (
-                      <tr key={l._id}>
-                        <td className="py-2 px-2 font-semibold text-slate-900">{l.leaveType}</td>
-                        <td className="py-2 px-2 text-[10px] font-medium text-slate-600">
+                <div className="space-y-2">
+                  {leaves.map((l) => (
+                    <div key={l._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 text-xs">{l.leaveType} • {l.totalDays}d</p>
+                        <p className="text-[10px] font-medium text-slate-600 mt-0.5">
                           {new Date(l.startDate).toLocaleDateString()} - {new Date(l.endDate).toLocaleDateString()}
-                        </td>
-                        <td className="py-2 px-2 font-bold text-indigo-600">{l.totalDays}d</td>
-                        <td className="py-2 px-2">
-                          <Badge variant={l.status} size="xs">{l.status}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </p>
+                      </div>
+                      <Badge variant={l.status} size="xs">{l.status}</Badge>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
 
           {/* Quick Admin Actions */}
           {isHR && (
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 border-t border-slate-200 pt-3 sm:pt-4">
               <button
                 onClick={() => {
                   onClose();
