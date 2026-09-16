@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
 import Select from '../components/Select';
+import Modal from '../components/Modal';
 import {
   Clock,
   LogIn,
@@ -32,6 +33,9 @@ const AttendancePage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
+
+  // Mobile/Desktop Day Details Modal
+  const [selectedDayModalData, setSelectedDayModalData] = useState(null);
 
   // Calendar Date State (default current month)
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -228,6 +232,12 @@ const AttendancePage = () => {
     label: `${emp.fullName} (${emp.employeeId})`,
     value: emp._id,
   }));
+
+  // Month names for date formatting
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   // Short day labels for mobile
   const dayLabelsFull = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -488,9 +498,24 @@ const AttendancePage = () => {
                 new Date().getFullYear() === year;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={`day-${dayNum}`}
-                  className={`aspect-square sm:h-28 rounded-xl sm:rounded-2xl border p-1 sm:p-2.5 flex flex-col justify-between transition-all overflow-hidden ${
+                  onClick={() => {
+                    setSelectedDayModalData({
+                      dayNum,
+                      dateStr: `${monthNames[month]} ${dayNum}, ${year}`,
+                      isSunday,
+                      isToday,
+                      log,
+                      approvedLeave,
+                      employeeName: selectedEmployee?.fullName || user?.fullName,
+                      employeeId: selectedEmployee?.employeeId || user?.employeeId,
+                      department: selectedEmployee?.department || user?.department,
+                      role: selectedEmployee?.role || user?.role,
+                    });
+                  }}
+                  className={`aspect-square sm:h-28 rounded-xl sm:rounded-2xl border p-1 sm:p-2.5 flex flex-col justify-between transition-all overflow-hidden cursor-pointer text-left hover:shadow-md hover:border-blue-500 hover:scale-[1.02] active:scale-95 ${
                     isToday
                       ? 'border-blue-600 bg-blue-50/50 ring-1 sm:ring-2 ring-blue-500/20'
                       : approvedLeave
@@ -502,7 +527,7 @@ const AttendancePage = () => {
                       : 'border-slate-200 bg-white hover:border-blue-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pointer-events-none w-full">
                     <span className={`text-[10px] sm:text-xs font-black ${isToday ? 'text-blue-800' : isSunday ? 'text-sky-800' : 'text-slate-900'}`}>
                       {dayNum}
                     </span>
@@ -514,7 +539,7 @@ const AttendancePage = () => {
                   </div>
 
                   {/* Day Shift Log / Approved Leave / Sunday Holiday Indicator */}
-                  <div className="mt-0.5 sm:mt-1 flex-1 flex flex-col justify-center min-w-0">
+                  <div className="mt-0.5 sm:mt-1 flex-1 flex flex-col justify-center min-w-0 pointer-events-none w-full">
                     {approvedLeave ? (
                       <>
                         {/* Mobile: small dot */}
@@ -570,7 +595,7 @@ const AttendancePage = () => {
                       <div className="hidden sm:block text-[10px] text-slate-500 font-bold italic text-center">No Shift</div>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -592,6 +617,116 @@ const AttendancePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Day Details Modal for Mobile & Desktop */}
+      <Modal
+        isOpen={!!selectedDayModalData}
+        onClose={() => setSelectedDayModalData(null)}
+        title={`Date Details: ${selectedDayModalData?.dateStr || ''}`}
+      >
+        {selectedDayModalData && (
+          <div className="space-y-4 text-xs">
+            {/* Employee Info Header */}
+            <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl border border-blue-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white font-black text-sm shrink-0">
+                {selectedDayModalData.employeeName?.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="font-black text-slate-900 text-sm truncate">{selectedDayModalData.employeeName}</p>
+                <p className="text-xs text-slate-600 font-mono font-bold truncate">
+                  {selectedDayModalData.employeeId} • {selectedDayModalData.department}
+                </p>
+              </div>
+            </div>
+
+            {/* Attendance Status Details */}
+            {selectedDayModalData.approvedLeave ? (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-amber-900 text-sm flex items-center gap-1.5">
+                    <Umbrella className="h-4 w-4 text-amber-700" />
+                    Approved Time-Off
+                  </span>
+                  <Badge variant={selectedDayModalData.approvedLeave.leaveType} size="xs">
+                    {selectedDayModalData.approvedLeave.leaveType} Leave
+                  </Badge>
+                </div>
+
+                <div className="space-y-1.5 pt-2 border-t border-amber-200/60 font-bold text-slate-800">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Total Duration:</span>
+                    <span className="font-black text-amber-950">{selectedDayModalData.approvedLeave.totalDays} Day(s)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Date Range:</span>
+                    <span className="font-mono text-slate-900 font-black">
+                      {new Date(selectedDayModalData.approvedLeave.startDate).toLocaleDateString()} to {new Date(selectedDayModalData.approvedLeave.endDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-amber-200/60">
+                  <p className="text-slate-700 font-black mb-1">Leave Reason:</p>
+                  <p className="p-2.5 rounded-lg bg-white border border-amber-200 text-slate-800 italic font-medium">
+                    "{selectedDayModalData.approvedLeave.reason}"
+                  </p>
+                </div>
+              </div>
+            ) : selectedDayModalData.log ? (
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-emerald-950 text-sm flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    Present • Shift Recorded
+                  </span>
+                  <Badge variant="Approved" size="xs">
+                    {selectedDayModalData.log.status || 'Present'}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-emerald-200/60">
+                  <div className="bg-white p-2.5 rounded-lg border border-emerald-200 text-center">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Check-In Time</span>
+                    <p className="text-xs font-mono font-black text-emerald-900 mt-0.5">
+                      {selectedDayModalData.log.checkInTime
+                        ? new Date(selectedDayModalData.log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        : '-'}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-emerald-200 text-center">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Check-Out Time</span>
+                    <p className="text-xs font-mono font-black text-emerald-900 mt-0.5">
+                      {selectedDayModalData.log.checkOutTime
+                        ? new Date(selectedDayModalData.log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        : 'Shift Active'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : selectedDayModalData.isSunday ? (
+              <div className="rounded-xl bg-sky-50 border border-sky-200 p-4 text-center space-y-1">
+                <Sun className="h-6 w-6 text-sky-600 mx-auto" />
+                <h4 className="font-black text-sky-950 text-sm">Sunday - Company Weekly Off</h4>
+                <p className="text-xs text-slate-600 font-medium">Standard non-working holiday for all employees.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-center space-y-1">
+                <AlertCircle className="h-6 w-6 text-slate-400 mx-auto" />
+                <h4 className="font-black text-slate-800 text-sm">No Attendance Log</h4>
+                <p className="text-xs text-slate-600 font-medium">No shift check-in or time-off request recorded for this date.</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setSelectedDayModalData(null)}
+              className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-black text-white hover:bg-blue-700 transition-all shadow-sm"
+            >
+              Close Details
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

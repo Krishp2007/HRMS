@@ -13,9 +13,20 @@
     box-sizing: border-box;
   }
 
-  /* Hand / Pointer Cursor for all buttons, links, and interactive controls */
-  button, a, select, input[type="submit"], input[type="button"], [role="button"], label[for] {
-    cursor: pointer !important;
+  /* Hand / Pointer Cursor for active buttons, links, and interactive controls */
+  button:not(:disabled), a, select:not(:disabled), input[type="submit"]:not(:disabled), input[type="button"]:not(:disabled), [role="button"], label[for] {
+    cursor: pointer;
+  }
+
+  /* Red Prohibited / Not Allowed Symbol for disabled buttons, inputs, and controls */
+  button:disabled,
+  button[disabled],
+  input:disabled,
+  select:disabled,
+  [aria-disabled="true"],
+  .disabled,
+  .cursor-not-allowed {
+    cursor: not-allowed !important;
   }
 }
 
