@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
+import Select from '../components/Select';
 import EmployeeProfileModal from '../components/EmployeeProfileModal';
 import { validatePhone, validatePassword } from '../utils/validation';
 import {
@@ -16,10 +18,7 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Shield,
-  Phone,
-  Mail,
-  Building,
+  Filter,
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 6;
@@ -43,6 +42,11 @@ const EmployeesList = () => {
   // Deep Profile Modal
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Status Toggle Confirmation Modal
+  const [targetStatusEmp, setTargetStatusEmp] = useState(null);
+  const [isStatusConfirmModalOpen, setIsStatusConfirmModalOpen] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // Create/Edit Modal
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -119,7 +123,6 @@ const EmployeesList = () => {
     e.preventDefault();
     setFormError('');
 
-    // Client-side phone & password validation
     if (!validatePhone(formData.phone)) {
       setFormError('Phone number must contain exactly 10 numeric digits.');
       return;
@@ -147,15 +150,23 @@ const EmployeesList = () => {
     }
   };
 
-  const handleStatusToggle = async (emp) => {
-    const newStatus = emp.status === 'Active' ? 'Inactive' : 'Active';
-    if (window.confirm(`Set status of ${emp.fullName} to ${newStatus}?`)) {
-      try {
-        await api.put(`/employees/${emp._id}`, { status: newStatus });
-        fetchEmployees();
-      } catch (err) {
-        alert(err.response?.data?.message || 'Failed to update employee status.');
-      }
+  const openStatusConfirmModal = (emp) => {
+    setTargetStatusEmp(emp);
+    setIsStatusConfirmModalOpen(true);
+  };
+
+  const handleConfirmStatusToggle = async () => {
+    if (!targetStatusEmp) return;
+    const newStatus = targetStatusEmp.status === 'Active' ? 'Inactive' : 'Active';
+    setStatusLoading(true);
+    try {
+      await api.put(`/employees/${targetStatusEmp._id}`, { status: newStatus });
+      setIsStatusConfirmModalOpen(false);
+      fetchEmployees();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update employee status.');
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -180,6 +191,41 @@ const EmployeesList = () => {
 
   const role = user?.role;
 
+  // Custom Dropdown Option Lists
+  const departmentOptions = [
+    { label: 'All Departments', value: '' },
+    { label: 'HR', value: 'HR' },
+    { label: 'Engineering', value: 'Engineering' },
+    { label: 'Sales', value: 'Sales' },
+    { label: 'Operations', value: 'Operations' },
+  ];
+
+  const roleOptions = [
+    { label: 'All Roles', value: '' },
+    { label: 'HR Lead', value: 'HR' },
+    { label: 'Manager', value: 'Manager' },
+    { label: 'Employee', value: 'Employee' },
+  ];
+
+  const statusOptions = [
+    { label: 'All Statuses', value: '' },
+    { label: 'Active Accounts', value: 'Active' },
+    { label: 'Deactivated Accounts', value: 'Inactive' },
+  ];
+
+  const formRoleOptions = [
+    { label: 'Employee', value: 'Employee' },
+    { label: 'Manager', value: 'Manager' },
+    { label: 'HR Lead', value: 'HR' },
+  ];
+
+  const formDeptOptions = [
+    { label: 'HR', value: 'HR' },
+    { label: 'Engineering', value: 'Engineering' },
+    { label: 'Sales', value: 'Sales' },
+    { label: 'Operations', value: 'Operations' },
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -200,11 +246,11 @@ const EmployeesList = () => {
         )}
       </div>
 
-      {/* Filter & Search Bar */}
+      {/* Filter & Search Bar with Custom Select Dropdowns */}
       <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="relative lg:col-span-2">
-            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
             <input
               type="text"
               placeholder="Search by name, email, or employee ID..."
@@ -213,51 +259,40 @@ const EmployeesList = () => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-blue-200 bg-sky-50/60 pl-10 pr-4 py-2 text-xs font-black text-slate-900 placeholder-slate-500 focus:border-blue-600 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-blue-200 bg-sky-50/60 pl-10 pr-4 py-2.5 text-xs font-black text-slate-900 placeholder-slate-500 focus:border-blue-600 focus:bg-white focus:outline-none"
             />
           </div>
 
-          <select
+          <Select
+            options={departmentOptions}
             value={departmentFilter}
-            onChange={(e) => {
-              setDepartmentFilter(e.target.value);
+            onChange={(val) => {
+              setDepartmentFilter(val);
               setCurrentPage(1);
             }}
-            className="rounded-xl border border-blue-200 bg-sky-50/60 px-3 py-2 text-xs font-black text-slate-900 focus:border-blue-600 focus:outline-none"
-          >
-            <option value="">All Departments</option>
-            <option value="HR">HR</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Sales">Sales</option>
-            <option value="Operations">Operations</option>
-          </select>
+            placeholder="All Departments"
+            icon={Filter}
+          />
 
-          <select
+          <Select
+            options={roleOptions}
             value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value);
+            onChange={(val) => {
+              setRoleFilter(val);
               setCurrentPage(1);
             }}
-            className="rounded-xl border border-blue-200 bg-sky-50/60 px-3 py-2 text-xs font-black text-slate-900 focus:border-blue-600 focus:outline-none"
-          >
-            <option value="">All Roles</option>
-            <option value="HR">HR</option>
-            <option value="Manager">Manager</option>
-            <option value="Employee">Employee</option>
-          </select>
+            placeholder="All Roles"
+          />
 
-          <select
+          <Select
+            options={statusOptions}
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onChange={(val) => {
+              setStatusFilter(val);
               setCurrentPage(1);
             }}
-            className="rounded-xl border border-blue-200 bg-sky-50/60 px-3 py-2 text-xs font-black text-slate-900 focus:border-blue-600 focus:outline-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="Active">Active Accounts</option>
-            <option value="Inactive">Deactivated Accounts</option>
-          </select>
+            placeholder="All Statuses"
+          />
         </div>
       </div>
 
@@ -272,7 +307,6 @@ const EmployeesList = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Card Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {paginatedEmployees.map((emp) => (
               <div
@@ -321,7 +355,7 @@ const EmployeesList = () => {
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleStatusToggle(emp)}
+                        onClick={() => openStatusConfirmModal(emp)}
                         className={`p-1.5 rounded-lg transition-colors ${
                           emp.status === 'Active'
                             ? 'text-rose-700 hover:bg-rose-50'
@@ -379,6 +413,18 @@ const EmployeesList = () => {
         onClose={() => setIsProfileModalOpen(false)}
         employeeId={selectedProfileId}
         isHR={role === 'HR'}
+      />
+
+      {/* Account Status Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isStatusConfirmModalOpen}
+        onClose={() => setIsStatusConfirmModalOpen(false)}
+        onConfirm={handleConfirmStatusToggle}
+        title={targetStatusEmp?.status === 'Active' ? 'Deactivate Employee Account' : 'Activate Employee Account'}
+        message={`Are you sure you want to change the status of ${targetStatusEmp?.fullName} (${targetStatusEmp?.employeeId}) to ${targetStatusEmp?.status === 'Active' ? 'Inactive' : 'Active'}?`}
+        confirmText={targetStatusEmp?.status === 'Active' ? 'Deactivate' : 'Activate'}
+        variant={targetStatusEmp?.status === 'Active' ? 'danger' : 'success'}
+        loading={statusLoading}
       />
 
       {/* Create / Edit Employee Modal */}
@@ -445,31 +491,18 @@ const EmployeesList = () => {
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-900 font-black mb-1">Assigned Role *</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full rounded-xl border border-blue-200 bg-sky-50/50 p-2.5 text-slate-900 font-bold focus:border-blue-600 focus:outline-none"
-              >
-                <option value="Employee">Employee</option>
-                <option value="Manager">Manager</option>
-                <option value="HR">HR Lead</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-slate-900 font-black mb-1">Department *</label>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full rounded-xl border border-blue-200 bg-sky-50/50 p-2.5 text-slate-900 font-bold focus:border-blue-600 focus:outline-none"
-              >
-                <option value="HR">HR</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Sales">Sales</option>
-                <option value="Operations">Operations</option>
-              </select>
-            </div>
+            <Select
+              label="Assigned Role *"
+              options={formRoleOptions}
+              value={formData.role}
+              onChange={(val) => setFormData({ ...formData, role: val })}
+            />
+            <Select
+              label="Department *"
+              options={formDeptOptions}
+              value={formData.department}
+              onChange={(val) => setFormData({ ...formData, department: val })}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
