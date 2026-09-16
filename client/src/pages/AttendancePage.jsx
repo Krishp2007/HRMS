@@ -38,7 +38,6 @@ const AttendancePage = () => {
   const [attendanceViewMode, setAttendanceViewMode] = useState('staff');
   const [presenceFilter, setPresenceFilter] = useState(() => (searchParams.get('filter') === 'present' ? 'present' : 'all'));
   const [todayPresentSet, setTodayPresentSet] = useState(new Set());
-  const [todayLogs, setTodayLogs] = useState([]);
 
   const [attendanceLogs, setAttendanceLogs] = useState([]);
   const [leaveRecords, setLeaveRecords] = useState([]);
@@ -69,12 +68,9 @@ const AttendancePage = () => {
             api.get(`/attendance/all?date=${todayStr}`).catch(() => ({ data: [] })),
           ]);
 
-          const logsData = Array.isArray(todayLogsRes.data) ? todayLogsRes.data : [];
-          setTodayLogs(logsData);
-
           // Set of employee IDs present today
           const presentIds = new Set(
-            logsData
+            (Array.isArray(todayLogsRes.data) ? todayLogsRes.data : [])
               .filter((r) => r.status === 'Present' || r.checkInTime)
               .map((r) => (r.employeeId?._id ? r.employeeId._id : r.employeeId))
           );
@@ -444,86 +440,6 @@ const AttendancePage = () => {
               </button>
             )}
           </div>
-
-          {/* Present Staff Members Info Cards Grid */}
-          {presenceFilter === 'present' && (() => {
-            const todayLogMap = new Map();
-            (todayLogs || []).forEach((log) => {
-              const empIdStr = log.employeeId?._id ? log.employeeId._id : log.employeeId;
-              if (empIdStr) todayLogMap.set(empIdStr, log);
-            });
-
-            const presentStaffList = employeesList.filter((e) => todayPresentSet.has(e._id));
-
-            return (
-              <div className="pt-2 space-y-2 border-t border-blue-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                    <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    Present Members Info ({presentStaffList.length})
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-500">Select any member card to view calendar</span>
-                </div>
-
-                {presentStaffList.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/50 p-4 text-center">
-                    <p className="text-xs font-bold text-slate-600">No staff members have checked in today yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                    {presentStaffList.map((emp) => {
-                      const log = todayLogMap.get(emp._id);
-                      const isSelected = emp._id === selectedEmployeeId;
-
-                      return (
-                        <div
-                          key={emp._id}
-                          onClick={() => handleEmployeeSelect(emp)}
-                          className={`rounded-xl border p-3 transition-all cursor-pointer shadow-xs space-y-2 ${
-                            isSelected
-                              ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 shadow-md'
-                              : 'border-blue-200 bg-white hover:border-emerald-400 hover:shadow-sm'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-black text-xs shrink-0">
-                                {emp.fullName.charAt(0)}
-                              </div>
-                              <div className="min-w-0">
-                                <h4 className="font-black text-slate-900 text-xs truncate">{emp.fullName}</h4>
-                                <p className="text-[10px] font-mono font-bold text-blue-700 truncate">{emp.employeeId}</p>
-                              </div>
-                            </div>
-                            <Badge variant="Present" size="xs">Present</Badge>
-                          </div>
-
-                          <div className="border-t border-slate-200/60 pt-1.5 grid grid-cols-2 gap-2 text-[10px] font-bold">
-                            <div>
-                              <span className="text-slate-500 block text-[9px] font-semibold">Check-In</span>
-                              <span className="text-emerald-700 font-black">
-                                {log?.checkInTime
-                                  ? new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                  : 'Checked In'}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-slate-500 block text-[9px] font-semibold">Shift Status</span>
-                              <span className="text-slate-900 font-extrabold">
-                                {log?.checkOutTime
-                                  ? `Out ${new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                                  : 'Active'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           {/* Filtered Chips / Options */}
           {(() => {

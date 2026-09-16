@@ -29,6 +29,7 @@ const EmployeesList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [employees, setEmployees] = useState([]);
+  const [todayPresentSet, setTodayPresentSet] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -77,8 +78,19 @@ const EmployeesList = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/employees');
+      const todayStr = new Date().toISOString().split('T')[0];
+      const [res, todayLogsRes] = await Promise.all([
+        api.get('/employees'),
+        api.get(`/attendance/all?date=${todayStr}`).catch(() => ({ data: [] })),
+      ]);
       setEmployees(res.data);
+
+      const presentIds = new Set(
+        (Array.isArray(todayLogsRes.data) ? todayLogsRes.data : [])
+          .filter((r) => r.status === 'Present' || r.checkInTime)
+          .map((r) => (r.employeeId?._id ? r.employeeId._id : r.employeeId))
+      );
+      setTodayPresentSet(presentIds);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch employees list.');
     } finally {
@@ -186,7 +198,12 @@ const EmployeesList = () => {
 
     const matchesDept = departmentFilter ? emp.department === departmentFilter : true;
     const matchesRole = roleFilter ? emp.role === roleFilter : true;
-    const matchesStatus = statusFilter ? emp.status === statusFilter : true;
+    
+    const matchesStatus = statusFilter
+      ? statusFilter === 'Present'
+        ? todayPresentSet.has(emp._id)
+        : emp.status === statusFilter
+      : true;
 
     return matchesSearch && matchesDept && matchesRole && matchesStatus;
   });
@@ -216,6 +233,7 @@ const EmployeesList = () => {
 
   const statusOptions = [
     { label: 'All Statuses', value: '' },
+    { label: 'Present Today 🟢', value: 'Present' },
     { label: 'Active Accounts', value: 'Active' },
     { label: 'Deactivated Accounts', value: 'Inactive' },
   ];
@@ -335,7 +353,15 @@ const EmployeesList = () => {
                     </div>
                   </div>
 
-                  <Badge variant={emp.status} size="xs">{emp.status}</Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant={emp.status} size="xs">{emp.status}</Badge>
+                    {todayPresentSet.has(emp._id) && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Present
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-b border-slate-100 py-2 text-xs font-black text-slate-800">
