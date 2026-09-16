@@ -10,11 +10,9 @@ import {
   Building,
   Briefcase,
   ShieldCheck,
-  Edit2,
-  Power,
 } from 'lucide-react';
 
-const EmployeeProfileModal = ({ isOpen, onClose, employeeId, onEdit, onToggleStatus, isHR }) => {
+const EmployeeProfileModal = ({ isOpen, onClose, employeeId }) => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -120,34 +118,6 @@ const EmployeeProfileModal = ({ isOpen, onClose, employeeId, onEdit, onToggleSta
               </p>
             </div>
           </div>
-
-          {/* Quick Admin Actions */}
-          {isHR && (
-            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 border-t border-slate-100 pt-3 sm:pt-4">
-              <button
-                onClick={() => {
-                  onClose();
-                  onEdit && onEdit(user);
-                }}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-700 transition-all shadow-sm"
-              >
-                <Edit2 className="h-3.5 w-3.5" />
-                <span>Edit Details</span>
-              </button>
-              <button
-                onClick={() => {
-                  onClose();
-                  onToggleStatus && onToggleStatus(user._id, user.status);
-                }}
-                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black text-white transition-all shadow-sm ${
-                  user.status === 'Active' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
-                }`}
-              >
-                <Power className="h-3.5 w-3.5" />
-                <span>{user.status === 'Active' ? 'Deactivate' : 'Activate'}</span>
-              </button>
-            </div>
-          )}
         </div>
       ) : (
         <p className="text-center py-6 text-slate-500 font-bold">Employee record not found.</p>

@@ -458,7 +458,6 @@ const EmployeesList = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         employeeId={selectedProfileId}
-        isHR={role === 'HR'}
       />
 
       {/* Account Status Confirmation Modal */}

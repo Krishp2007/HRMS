@@ -436,7 +436,6 @@ const Dashboard = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         employeeId={selectedProfileId}
-        isHR={role === 'HR'}
       />
     </div>
   );
