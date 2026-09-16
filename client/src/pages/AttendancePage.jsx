@@ -412,12 +412,6 @@ const AttendancePage = () => {
                 </button>
               </div>
             </div>
-
-            {selectedEmployee && (
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 w-fit truncate">
-                Viewing: <strong className="font-black">{selectedEmployee.fullName}</strong> ({selectedEmployee.employeeId})
-              </span>
-            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -456,13 +450,10 @@ const AttendancePage = () => {
                 );
               });
 
-              const dropdownOptions = filteredStaff.map((emp) => {
-                const isPresent = todayPresentSet.has(emp._id);
-                return {
-                  label: `${emp.fullName} (${emp.employeeId})${isPresent ? ' 🟢 Present' : ''}`,
-                  value: emp._id,
-                };
-              });
+              const dropdownOptions = filteredStaff.map((emp) => ({
+                label: `${emp.fullName} (${emp.employeeId})`,
+                value: emp._id,
+              }));
 
               return (
                 <Select
