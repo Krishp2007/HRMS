@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Building, Mail, Lock, LogIn as LogInIcon, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Building, Mail, Lock, LogIn as LogInIcon, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,21 +27,6 @@ const Login = () => {
     }
   };
 
-  const handleDemoLogin = async (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError('');
-    setLoading(true);
-
-    try {
-      await login(demoEmail, demoPass);
-      navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed demo login');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-sky-50/60 p-4 font-sans selection:bg-blue-600 selection:text-white">
@@ -107,37 +92,7 @@ const Login = () => {
             </button>
           </form>
 
-          {/* 1-Click Demo Logins */}
-          <div className="border-t border-slate-100 pt-6 space-y-3">
-            <div className="flex items-center gap-1.5 text-slate-500 font-bold text-[11px]">
-              <ShieldCheck className="h-4 w-4 text-blue-600" />
-              <span>1-Click Assessment Demo Roles</span>
-            </div>
 
-            <div className="grid grid-cols-3 gap-2 text-[10px]">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('hr@apptrait.com', 'password123')}
-                className="rounded-xl border border-blue-200 bg-blue-50 p-2 text-blue-800 font-extrabold hover:bg-blue-100 transition-all text-center"
-              >
-                HR Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('manager.eng@apptrait.com', 'password123')}
-                className="rounded-xl border border-sky-200 bg-sky-50 p-2 text-sky-800 font-extrabold hover:bg-sky-100 transition-all text-center"
-              >
-                Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('employee.dev1@apptrait.com', 'password123')}
-                className="rounded-xl border border-indigo-200 bg-indigo-50 p-2 text-indigo-800 font-extrabold hover:bg-indigo-100 transition-all text-center"
-              >
-                Employee
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
