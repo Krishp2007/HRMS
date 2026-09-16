@@ -383,7 +383,7 @@ const AttendancePage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-                Staff Members ({employeesList.length})
+                Select Staff Member ({employeesList.length})
               </span>
 
               {/* Filter Pills: All Staff vs Present Today */}
@@ -420,88 +420,68 @@ const AttendancePage = () => {
             )}
           </div>
 
-          {/* Search Input by Name or Unique Employee ID */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search staff by name or unique ID (e.g. John Doe, EMP-1004)..."
-              value={empSearchTerm}
-              onChange={(e) => setEmpSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-blue-200 bg-sky-50/70 pl-10 pr-9 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-500 transition-all"
-            />
-            {empSearchTerm && (
-              <button
-                type="button"
-                onClick={() => setEmpSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-slate-800 bg-slate-200/80 rounded-full h-4 w-4 flex items-center justify-center transition-colors"
-              >
-                ✕
-              </button>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Search Input by Name or Unique Employee ID */}
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search staff by name or unique ID..."
+                value={empSearchTerm}
+                onChange={(e) => setEmpSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-blue-200 bg-sky-50/70 pl-10 pr-9 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-500 transition-all"
+              />
+              {empSearchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setEmpSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-slate-800 bg-slate-200/80 rounded-full h-4 w-4 flex items-center justify-center transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Selector of Employees */}
+            {(() => {
+              const filteredStaff = employeesList.filter((emp) => {
+                if (presenceFilter === 'present' && !todayPresentSet.has(emp._id)) {
+                  return false;
+                }
+                const query = empSearchTerm.toLowerCase();
+                return (
+                  emp.fullName?.toLowerCase().includes(query) ||
+                  emp.employeeId?.toLowerCase().includes(query) ||
+                  emp.department?.toLowerCase().includes(query)
+                );
+              });
+
+              const dropdownOptions = filteredStaff.map((emp) => {
+                const isPresent = todayPresentSet.has(emp._id);
+                return {
+                  label: `${emp.fullName} (${emp.employeeId})${isPresent ? ' 🟢 Present' : ''}`,
+                  value: emp._id,
+                };
+              });
+
+              return (
+                <Select
+                  options={dropdownOptions}
+                  value={selectedEmployeeId}
+                  onChange={(empId) => {
+                    const found = employeesList.find((e) => e._id === empId);
+                    if (found) handleEmployeeSelect(found);
+                  }}
+                  placeholder={
+                    filteredStaff.length === 0
+                      ? 'No matching staff found'
+                      : 'Choose staff member...'
+                  }
+                  icon={User}
+                />
+              );
+            })()}
           </div>
-
-          {/* Filtered Chips / Options */}
-          {(() => {
-            const filteredStaff = employeesList.filter((emp) => {
-              if (presenceFilter === 'present' && !todayPresentSet.has(emp._id)) {
-                return false;
-              }
-              const query = empSearchTerm.toLowerCase();
-              return (
-                emp.fullName?.toLowerCase().includes(query) ||
-                emp.employeeId?.toLowerCase().includes(query) ||
-                emp.department?.toLowerCase().includes(query)
-              );
-            });
-
-            if (filteredStaff.length === 0) {
-              return (
-                <p className="text-xs font-bold text-slate-500 py-3 text-center italic">
-                  {presenceFilter === 'present'
-                    ? 'No staff members checked in / present today.'
-                    : `No staff member found matching "${empSearchTerm}"`}
-                </p>
-              );
-            }
-
-            return (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                {filteredStaff.map((emp) => {
-                  const isSelected = emp._id === selectedEmployeeId;
-                  const isPresentToday = todayPresentSet.has(emp._id);
-
-                  return (
-                    <button
-                      key={emp._id}
-                      type="button"
-                      onClick={() => handleEmployeeSelect(emp)}
-                      className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black transition-all shrink-0 border cursor-pointer ${
-                        isSelected
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
-                          : 'bg-sky-50 text-slate-900 border-blue-200 hover:bg-blue-100'
-                      }`}
-                    >
-                      <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black ${
-                          isSelected ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'
-                        }`}
-                      >
-                        {emp.fullName.charAt(0)}
-                      </div>
-                      <span>{emp.fullName}</span>
-                      <span className={`text-[10px] font-mono font-black ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
-                        ({emp.employeeId})
-                      </span>
-                      {isPresentToday && (
-                        <span className="h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-emerald-200" title="Present Today" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })()}
         </div>
       )}
 
