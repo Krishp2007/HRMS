@@ -18,6 +18,6 @@ router.post('/check-out', checkOut);
 router.get('/today-status', getTodayStatus);
 router.get('/my-history', getMyAttendanceHistory);
 router.get('/team', authorize('Manager', 'HR'), getTeamAttendance);
-router.get('/all', authorize('HR'), getAllAttendance);
+router.get('/all', authorize('HR', 'Manager'), getAllAttendance);
 
 module.exports = router;

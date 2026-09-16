@@ -55,11 +55,14 @@ const AttendancePage = () => {
         if (role === 'HR' || role === 'Manager') {
           const empsRes = await api.get('/employees');
           const activeEmps = empsRes.data.filter((e) => e.status === 'Active');
-          setEmployeesList(activeEmps);
+          const hasSelf = activeEmps.some((e) => e._id === user._id);
+          const fullList = hasSelf ? activeEmps : [{ ...user, status: 'Active' }, ...activeEmps];
+          
+          setEmployeesList(fullList);
 
-          if (activeEmps.length > 0) {
-            setSelectedEmployeeId(activeEmps[0]._id);
-            setSelectedEmployee(activeEmps[0]);
+          if (fullList.length > 0) {
+            setSelectedEmployeeId(fullList[0]._id);
+            setSelectedEmployee(fullList[0]);
           }
         } else {
           // Employee role

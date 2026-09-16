@@ -149,20 +149,29 @@ const getTeamAttendance = async (req, res) => {
   }
 };
 
-// @desc    Get all employees attendance log (HR view)
+// @desc    Get attendance logs (HR & Manager view)
 // @route   GET /api/attendance/all
-// @access  Private (HR)
+// @access  Private (HR, Manager)
 const getAllAttendance = async (req, res) => {
   try {
     const { date, department, employeeId } = req.query;
     let query = {};
 
-    if (date) {
-      query.date = date;
+    if (req.user.role === 'Manager') {
+      const teamMembers = await User.find({ managerId: req.user._id }).select('_id');
+      const allowedIds = [req.user._id, ...teamMembers.map((m) => m._id)];
+
+      if (employeeId) {
+        query.employeeId = employeeId;
+      } else {
+        query.employeeId = { $in: allowedIds };
+      }
+    } else if (employeeId) {
+      query.employeeId = employeeId;
     }
 
-    if (employeeId) {
-      query.employeeId = employeeId;
+    if (date) {
+      query.date = date;
     }
 
     let records = await Attendance.find(query)
