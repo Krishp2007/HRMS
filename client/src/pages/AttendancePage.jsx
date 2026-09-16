@@ -13,6 +13,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Building,
+  Briefcase,
+  Sun,
+  Umbrella,
 } from 'lucide-react';
 
 const AttendancePage = () => {
@@ -24,6 +27,7 @@ const AttendancePage = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const [attendanceLogs, setAttendanceLogs] = useState([]);
+  const [leaveRecords, setLeaveRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
@@ -65,29 +69,50 @@ const AttendancePage = () => {
     initPage();
   }, [user, role]);
 
-  // 2. Fetch Selected Employee's Attendance History for the Calendar
-  const fetchSelectedEmployeeAttendance = async () => {
+  // 2. Fetch Selected Employee's Attendance History & Approved Leaves for Calendar
+  const fetchSelectedEmployeeData = async () => {
     if (!selectedEmployeeId) return;
 
     try {
       setLoading(true);
-      let res;
-      if (role === 'HR' || role === 'Manager') {
-        res = await api.get(`/attendance/all?employeeId=${selectedEmployeeId}`);
+      let attendanceRes;
+      let leavesRes;
+
+      if (role === 'HR') {
+        [attendanceRes, leavesRes] = await Promise.all([
+          api.get(`/attendance/all?employeeId=${selectedEmployeeId}`),
+          api.get('/leaves/all-requests'),
+        ]);
+      } else if (role === 'Manager') {
+        [attendanceRes, leavesRes] = await Promise.all([
+          api.get(`/attendance/all?employeeId=${selectedEmployeeId}`),
+          api.get('/leaves/team-requests'),
+        ]);
       } else {
-        res = await api.get('/attendance/my-history');
+        [attendanceRes, leavesRes] = await Promise.all([
+          api.get('/attendance/my-history'),
+          api.get('/leaves/my-requests'),
+        ]);
       }
 
-      setAttendanceLogs(Array.isArray(res.data) ? res.data : []);
+      setAttendanceLogs(Array.isArray(attendanceRes.data) ? attendanceRes.data : []);
+
+      // Filter leaves for this selected employee and status === 'Approved'
+      const empLeaves = (Array.isArray(leavesRes.data) ? leavesRes.data : []).filter(
+        (l) =>
+          (l.employeeId?._id === selectedEmployeeId || l.employeeId === selectedEmployeeId) &&
+          l.status === 'Approved'
+      );
+      setLeaveRecords(empLeaves);
     } catch (err) {
-      console.error('Failed to fetch employee attendance logs:', err);
+      console.error('Failed to fetch employee attendance & leave data:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSelectedEmployeeAttendance();
+    fetchSelectedEmployeeData();
   }, [selectedEmployeeId]);
 
   const handleEmployeeSelect = (emp) => {
@@ -103,7 +128,7 @@ const AttendancePage = () => {
       setActionMsg('✅ Checked in successfully!');
       const todayRes = await api.get('/attendance/today-status');
       setTodayStatus(todayRes.data);
-      fetchSelectedEmployeeAttendance();
+      fetchSelectedEmployeeData();
     } catch (err) {
       alert(err.response?.data?.message || 'Check-in failed');
     } finally {
@@ -119,7 +144,7 @@ const AttendancePage = () => {
       setActionMsg('✅ Checked out successfully!');
       const todayRes = await api.get('/attendance/today-status');
       setTodayStatus(todayRes.data);
-      fetchSelectedEmployeeAttendance();
+      fetchSelectedEmployeeData();
     } catch (err) {
       alert(err.response?.data?.message || 'Check-out failed');
     } finally {
@@ -147,6 +172,17 @@ const AttendancePage = () => {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
+  // Month Picker Input Handler: e.g. "2026-09"
+  const handleMonthPickerChange = (monthVal) => {
+    if (!monthVal) return;
+    const [yStr, mStr] = monthVal.split('-');
+    const newY = parseInt(yStr, 10);
+    const newM = parseInt(mStr, 10) - 1;
+    setCurrentDate(new Date(newY, newM, 1));
+  };
+
+  const monthInputValue = `${year}-${String(month + 1).padStart(2, '0')}`;
+
   // Find attendance record for selected date string YYYY-MM-DD
   const getLogForDate = (dayNum) => {
     const paddedMonth = String(month + 1).padStart(2, '0');
@@ -154,6 +190,44 @@ const AttendancePage = () => {
     const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
     return attendanceLogs.find((log) => log.date === dateStr);
   };
+
+  // Check if date falls in any approved leave for this employee
+  const getApprovedLeaveForDate = (dayNum) => {
+    const checkDate = new Date(year, month, dayNum);
+    return leaveRecords.find((l) => {
+      const start = new Date(l.startDate);
+      const end = new Date(l.endDate);
+      // Strip hours for date-only comparison
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      return checkDate >= start && checkDate <= end;
+    });
+  };
+
+  // Monthly Metrics Calculations for Summary Grid above Calendar
+  let workingDaysCount = 0;
+  let presentDaysCount = 0;
+  let approvedLeaveDaysCount = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const dayOfWeek = dateObj.getDay();
+
+    if (dayOfWeek !== 0) {
+      // Non-Sunday working day
+      workingDaysCount++;
+    }
+
+    const log = getLogForDate(d);
+    if (log && log.status === 'Present') {
+      presentDaysCount++;
+    }
+
+    const leave = getApprovedLeaveForDate(d);
+    if (leave) {
+      approvedLeaveDaysCount++;
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -249,9 +323,60 @@ const AttendancePage = () => {
         </div>
       )}
 
+      {/* Monthly Summary Stat Cards Grid above Calendar */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Month Total Days</p>
+              <h4 className="text-xl font-black text-slate-900 mt-1">{daysInMonth} Days</h4>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+              <CalendarIcon className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Working Days</p>
+              <h4 className="text-xl font-black text-indigo-950 mt-1">{workingDaysCount} Days</h4>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800">
+              <Briefcase className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Present Days</p>
+              <h4 className="text-xl font-black text-emerald-950 mt-1">{presentDaysCount} Days</h4>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-700">Approved Leaves</p>
+              <h4 className="text-xl font-black text-amber-950 mt-1">{approvedLeaveDaysCount} Days</h4>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+              <Umbrella className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Individual Employee Calendar Card */}
       <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm space-y-6">
-        {/* Selected Employee Calendar Header */}
+        {/* Selected Employee Calendar Header with Month/Year Picker */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-lg shadow-sm">
@@ -272,11 +397,18 @@ const AttendancePage = () => {
             </div>
           </div>
 
-          {/* Month Navigation */}
+          {/* Direct Month & Year Picker + Prev/Next Controls */}
           <div className="flex items-center gap-3">
-            <h4 className="text-base font-black text-slate-900">
-              {monthNames[month]} {year}
-            </h4>
+            <div className="flex items-center gap-2 bg-sky-50 border border-blue-200 rounded-xl px-3 py-1.5">
+              <CalendarIcon className="h-4 w-4 text-blue-600" />
+              <input
+                type="month"
+                value={monthInputValue}
+                onChange={(e) => handleMonthPickerChange(e.target.value)}
+                className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+              />
+            </div>
+
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handlePrevMonth}
@@ -298,7 +430,7 @@ const AttendancePage = () => {
 
         {/* Days of Week Header */}
         <div className="grid grid-cols-7 gap-2 text-center text-xs font-black uppercase tracking-wider text-slate-700">
-          <div>Sun</div>
+          <div className="text-sky-700">Sun (Off)</div>
           <div>Mon</div>
           <div>Tue</div>
           <div>Wed</div>
@@ -322,7 +454,12 @@ const AttendancePage = () => {
             {/* Day Cells 1-31 */}
             {Array.from({ length: daysInMonth }).map((_, idx) => {
               const dayNum = idx + 1;
+              const dateObj = new Date(year, month, dayNum);
+              const isSunday = dateObj.getDay() === 0;
+
               const log = getLogForDate(dayNum);
+              const approvedLeave = getApprovedLeaveForDate(dayNum);
+
               const isToday =
                 new Date().getDate() === dayNum &&
                 new Date().getMonth() === month &&
@@ -334,13 +471,17 @@ const AttendancePage = () => {
                   className={`h-28 rounded-2xl border p-2.5 flex flex-col justify-between transition-all ${
                     isToday
                       ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/20'
+                      : approvedLeave
+                      ? 'border-amber-300 bg-amber-50/60'
                       : log
                       ? 'border-emerald-300 bg-emerald-50/30'
+                      : isSunday
+                      ? 'border-sky-200 bg-sky-50/70'
                       : 'border-slate-200 bg-white hover:border-blue-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-black ${isToday ? 'text-blue-800' : 'text-slate-900'}`}>
+                    <span className={`text-xs font-black ${isToday ? 'text-blue-800' : isSunday ? 'text-sky-800' : 'text-slate-900'}`}>
                       {dayNum}
                     </span>
                     {isToday && (
@@ -350,12 +491,20 @@ const AttendancePage = () => {
                     )}
                   </div>
 
-                  {/* Day Shift Log Data */}
+                  {/* Day Shift Log / Approved Leave / Sunday Holiday Indicator */}
                   <div className="mt-1 flex-1 flex flex-col justify-center">
-                    {!log ? (
-                      <div className="text-[10px] text-slate-500 font-bold italic text-center">No Shift</div>
-                    ) : (
-                      <div className="rounded-xl bg-emerald-100/80 border border-emerald-300 p-1.5 space-y-1">
+                    {approvedLeave ? (
+                      <div className="rounded-xl bg-amber-100 border border-amber-300 p-1.5 space-y-0.5 shadow-sm">
+                        <div className="flex items-center justify-between text-[10px] font-black text-amber-950">
+                          <span>Approved Leave</span>
+                          <Umbrella className="h-3 w-3 text-amber-700" />
+                        </div>
+                        <div className="text-[9px] font-bold text-amber-900">
+                          {approvedLeave.leaveType} Leave
+                        </div>
+                      </div>
+                    ) : log ? (
+                      <div className="rounded-xl bg-emerald-100/80 border border-emerald-300 p-1.5 space-y-1 shadow-sm">
                         <div className="flex items-center justify-between text-[10px] font-black text-emerald-950">
                           <span>{log.status}</span>
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
@@ -369,6 +518,15 @@ const AttendancePage = () => {
                           </div>
                         </div>
                       </div>
+                    ) : isSunday ? (
+                      <div className="rounded-xl bg-sky-100/70 border border-sky-200 p-1.5 text-center shadow-sm">
+                        <div className="flex items-center justify-center gap-1 text-[10px] font-black text-sky-950">
+                          <Sun className="h-3 w-3 text-sky-600" />
+                          <span>Weekly Off</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-slate-500 font-bold italic text-center">No Shift</div>
                     )}
                   </div>
                 </div>
