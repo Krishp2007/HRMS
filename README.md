@@ -10,19 +10,19 @@ A full-stack Role-Based HRMS built for SaaS companies to streamline employee dir
 
 ## 🔑 Demo Credentials (Auto-Seeded)
 
-Run `npm run seed` in the `server` directory to populate the database with these pre-configured test accounts across all 3 roles:
+Run `npm run seed` in the `server` directory to populate the database with these pre-configured test accounts across all 3 roles so you can test all permissions and workflows:
 
-| Role | Name | Email | Password | Assigned Manager / Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| **HR Lead** | Sarah Connor | `hr@apptrait.com` | `password123` | Full Admin Permissions |
-| **Eng Manager** | Alex Vance | `manager1@apptrait.com` | `password123` | Manager (Engineering Team) |
-| **Sales Manager** | David Miller | `manager2@apptrait.com` | `password123` | Manager (Sales Team) |
-| **Employee 1** | John Doe | `employee1@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
-| **Employee 2** | Jane Smith | `employee2@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
-| **Employee 3** | Robert Johnson | `employee3@apptrait.com` | `password123` | Eng Team (Manager: Alex Vance) |
-| **Employee 4** | Emily Davis | `employee4@apptrait.com` | `password123` | Sales Team (Manager: David Miller) |
-| **Employee 5** | Michael Brown | `employee5@apptrait.com` | `password123` | Sales Team (Manager: David Miller) |
-| **Inactive Emp** | Mark Wilson | `employee6@apptrait.com` | `password123` | Deactivated Account (Access Blocked) |
+**HR/Admin**
+Email: hr@apptrait.com
+Password: password123
+
+**Manager**
+Email: manager1@apptrait.com
+Password: password123
+
+**Employee**
+Email: employee1@apptrait.com
+Password: password123
 
 ---
 
