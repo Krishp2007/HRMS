@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
@@ -26,9 +27,27 @@ const ITEMS_PER_PAGE = 6;
 
 const LeaveManagementPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
+
+  // Synchronize statusFilter with URL search parameters (e.g. /leaves?status=Pending or /leaves?status=Approved)
+  useEffect(() => {
+    const urlStatus = searchParams.get('status') || '';
+    setStatusFilter(urlStatus);
+    setCurrentPage(1);
+  }, [searchParams]);
+
+  const handleStatusFilterChange = (val) => {
+    setStatusFilter(val);
+    setCurrentPage(1);
+    if (val) {
+      setSearchParams({ status: val });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,10 +233,7 @@ const LeaveManagementPage = () => {
           <Select
             options={statusFilterOptions}
             value={statusFilter}
-            onChange={(val) => {
-              setStatusFilter(val);
-              setCurrentPage(1);
-            }}
+            onChange={handleStatusFilterChange}
             placeholder="All Statuses"
             icon={Filter}
           />

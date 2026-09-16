@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Badge from '../components/Badge';
@@ -25,6 +26,7 @@ const ITEMS_PER_PAGE = 6;
 
 const EmployeesList = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,12 @@ const EmployeesList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
+
+  useEffect(() => {
+    const urlStatus = searchParams.get('status') || '';
+    if (urlStatus) setStatusFilter(urlStatus);
+  }, [searchParams]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);

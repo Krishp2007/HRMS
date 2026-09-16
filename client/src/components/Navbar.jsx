@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Badge from './Badge';
 import ConfirmModal from './ConfirmModal';
@@ -44,17 +44,17 @@ const Navbar = () => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo & Brand */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+            {/* Logo & Brand - Clickable to redirect to Dashboard */}
+            <Link to="/" className="flex items-center gap-3 cursor-pointer group">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <Building className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                <span className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5 group-hover:text-blue-600 transition-colors">
                   AppTrait <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">HRMS</span>
                 </span>
               </div>
-            </div>
+            </Link>
 
             {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center gap-1 bg-sky-50/80 p-1 rounded-2xl border border-blue-100">

@@ -12,6 +12,11 @@
   * {
     box-sizing: border-box;
   }
+
+  /* Hand / Pointer Cursor for all buttons, links, and interactive controls */
+  button, a, select, input[type="submit"], input[type="button"], [role="button"], label[for] {
+    cursor: pointer !important;
+  }
 }
 
 /* Custom crisp bright blue scrollbar styling */
