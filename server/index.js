@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./config/db');
 
 dotenv.config();
@@ -13,6 +14,9 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Sanitize data to prevent NoSQL Injection
+app.use(mongoSanitize());
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -34,6 +38,18 @@ app.use((req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // Handle Mongoose Validation Errors safely to a 400 Bad Request
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map((val) => val.message);
+    return res.status(400).json({ message: messages.join(', ') });
+  }
+
+  // Handle Mongoose CastErrors (e.g. invalid ObjectId)
+  if (err.name === 'CastError') {
+    return res.status(400).json({ message: 'Invalid ID format' });
+  }
+
   res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 

@@ -8,8 +8,9 @@ const attendanceSchema = new mongoose.Schema(
       required: true,
     },
     date: {
-      type: String, // Format: YYYY-MM-DD
+      type: String,
       required: true,
+      match: [/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'],
     },
     checkInTime: {
       type: Date,
