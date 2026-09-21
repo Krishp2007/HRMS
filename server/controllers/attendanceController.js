@@ -40,12 +40,25 @@ const checkIn = async (req, res) => {
       });
     }
 
+    const now = new Date();
+    let initialStatus = 'Present';
+    let remarks = req.body.remarks || '';
+
+    // Late Arrival Check (Shift starts at 10:00 AM, 15 mins grace period)
+    const lateThreshold = new Date();
+    lateThreshold.setHours(10, 15, 0, 0);
+
+    // If check-in is past 10:15 AM
+    if (now.getTime() > lateThreshold.getTime()) {
+      remarks = remarks ? `${remarks} | Late Arrival` : 'Late Arrival';
+    }
+
     const attendance = await Attendance.create({
       employeeId,
       date: today,
-      checkInTime: new Date(),
-      status: 'Present',
-      remarks: req.body.remarks || '',
+      checkInTime: now,
+      status: initialStatus,
+      remarks,
     });
 
     return res.status(201).json(attendance);
@@ -73,7 +86,31 @@ const checkOut = async (req, res) => {
       return res.status(400).json({ message: 'You have already checked out for today.' });
     }
 
-    attendance.checkOutTime = new Date();
+    const now = new Date();
+    
+    // Calculate worked hours (CheckOut - CheckIn)
+    const diffTime = now.getTime() - new Date(attendance.checkInTime).getTime();
+    const workedHours = diffTime / (1000 * 60 * 60);
+    
+    let finalStatus = attendance.status;
+    if (workedHours < 2) {
+      finalStatus = 'Absent';
+    } else if (workedHours < 4.5) {
+      finalStatus = 'Half Day';
+    }
+
+    // Early Departure Check (Shift ends at 6:00 PM, threshold 5:45 PM)
+    const earlyDepartureThreshold = new Date();
+    earlyDepartureThreshold.setHours(17, 45, 0, 0);
+
+    let remarks = attendance.remarks;
+    if (now.getTime() < earlyDepartureThreshold.getTime()) {
+      remarks = remarks ? `${remarks} | Early Departure` : 'Early Departure';
+    }
+
+    attendance.checkOutTime = now;
+    attendance.status = finalStatus;
+    attendance.remarks = remarks;
     await attendance.save();
 
     return res.json(attendance);
