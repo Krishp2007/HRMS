@@ -72,6 +72,7 @@ const LeaveManagementPage = () => {
   // Action Confirmation Modals
   const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false);
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [targetLeave, setTargetLeave] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -177,6 +178,25 @@ const LeaveManagementPage = () => {
       fetchLeaves();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to reject leave request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openCancelModal = (leave) => {
+    setTargetLeave(leave);
+    setIsCancelConfirmOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!targetLeave) return;
+    setActionLoading(true);
+    try {
+      await api.delete(`/leaves/${targetLeave._id}`);
+      setIsCancelConfirmOpen(false);
+      fetchLeaves();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to withdraw leave request.');
     } finally {
       setActionLoading(false);
     }
@@ -389,7 +409,7 @@ const LeaveManagementPage = () => {
                 </div>
 
                 {/* Approve/Reject Action Buttons (Manager/HR) */}
-                {(role === 'HR' || role === 'Manager') && leave.status === 'Pending' && (
+                {(role === 'HR' || role === 'Manager') && leave.status === 'Pending' && (leave.employeeId?._id || leave.employeeId) !== user?._id && (
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                     <button
                       onClick={() => openApproveModal(leave)}
@@ -404,6 +424,19 @@ const LeaveManagementPage = () => {
                     >
                       <XCircle className="h-3.5 w-3.5" />
                       <span>Reject</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Cancel Action Button (Owner Only) */}
+                {leave.status === 'Pending' && (leave.employeeId?._id || leave.employeeId) === user?._id && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => openCancelModal(leave)}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 py-2 text-xs font-black text-rose-700 hover:bg-rose-100 transition-all shadow-sm"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      <span>Cancel Application</span>
                     </button>
                   </div>
                 )}
@@ -455,6 +488,18 @@ const LeaveManagementPage = () => {
         message={`Are you sure you want to approve time-off for ${targetLeave?.employeeId?.fullName} (${targetLeave?.totalDays} Days)?`}
         confirmText="Approve Leave"
         variant="success"
+        loading={actionLoading}
+      />
+
+      {/* Cancel Confirmation Modal (Employee) */}
+      <ConfirmModal
+        isOpen={isCancelConfirmOpen}
+        onClose={() => setIsCancelConfirmOpen(false)}
+        onConfirm={handleConfirmCancel}
+        title="Withdraw Leave Application"
+        message="Are you sure you want to withdraw this pending leave application? This action cannot be undone."
+        confirmText="Withdraw Application"
+        variant="danger"
         loading={actionLoading}
       />
 

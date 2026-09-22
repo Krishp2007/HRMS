@@ -307,22 +307,24 @@ const Dashboard = () => {
                   <p className="text-slate-600 mt-1 italic font-medium">"{l.reason}"</p>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    onClick={() => openApproveModal(l)}
-                    className="flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-black text-white hover:bg-emerald-700 transition-all shadow-sm"
-                  >
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => openRejectModal(l)}
-                    className="flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white hover:bg-rose-700 transition-all shadow-sm"
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    <span>Reject</span>
-                  </button>
-                </div>
+                {l.employeeId?._id !== user?._id && (
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => openApproveModal(l)}
+                      className="flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-black text-white hover:bg-emerald-700 transition-all shadow-sm"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>Approve</span>
+                    </button>
+                    <button
+                      onClick={() => openRejectModal(l)}
+                      className="flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white hover:bg-rose-700 transition-all shadow-sm"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      <span>Reject</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
